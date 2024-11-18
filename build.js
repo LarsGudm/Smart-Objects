@@ -46,8 +46,14 @@ if (process.argv.includes('--watch')) {
     buildScript();
 }
 
-//Use npm run build to build
-//Use npm run watch for auto updates
-//git checkout Smart-Text
-//git checkout main
-//use Control+C to stop any running code
+/*
+Use npm run build to build
+Use npm run watch for auto updates
+git checkout Smart-Text
+git checkout main
+use Control+C to stop any running code
+
+git add . //This command adds all the changes in your working directory (the current state of your files) to the staging area.
+git commit -m "Comment" //Commit changes and add comment
+git push origin main
+*/
