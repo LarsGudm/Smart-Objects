@@ -11,27 +11,33 @@ var UI = (function() {
     var settingsFilePath = scriptFolderPath + "/SmartShapesSettings.txt";
 
     // Create the Button Group with "Create" and "Convert" Buttons
+    // Create the Button Group with "Create Smart Shape" and "Convert" Buttons
     function createShapeButtonGroup(parent) {
-        var mainGroup = parent.add("group");
-        mainGroup.orientation = "column";
+        var shapeGroup = parent.add("group");
+        shapeGroup.orientation = "column";
+        shapeGroup.alignChildren = ["left", "top"];
+        shapeGroup.spacing = 10; // Add some spacing between groups
 
-        var buttonGroup = mainGroup.add("group");
+        var buttonGroup = shapeGroup.add("group");
         buttonGroup.orientation = "row";
+        buttonGroup.alignChildren = ["left", "center"];
+        buttonGroup.spacing = 10; // Add spacing between buttons
 
+        // Create "Create Smart Shape" Button
         var createShapeBtn = buttonGroup.add("button", undefined, "Create Smart Shape");
         createShapeBtn.onClick = function() {
             app.beginUndoGroup("Create Smart Shape");
             try {
                 var comp = app.project.activeItem;
                 if (!comp || !(comp instanceof CompItem)) {
-                    Logging.logMessage("Please select a composition.");
+                    Logging.logMessage("Please select a composition.", true);
                     return;
                 }
-        
+
                 var selectedLayers = comp.selectedLayers;
                 var createMatte = false;
                 var targetLayer = null;
-        
+
                 if (selectedLayers.length > 0) {
                     // There are selected layers. Ask the user about matte options.
                     var result = showMatteOptionsDialog();
@@ -47,45 +53,104 @@ var UI = (function() {
                         return; // Exit the function
                     }
                 }
-        
+
                 ShapeFunctions.createSmartShape({
-                    fillColor: getCurrentFillColor(), // Use the function from UI module
+                    fillColor: getCurrentFillColor(), // Pass the current fill color
                     targetLayer: targetLayer,
                     createMatte: createMatte,
-                    separateDimensions: separateDimsCheckbox.value // Pass the value directly
+                    separateDimensions: separateDimsCheckbox.value // Pass separate dimensions value
                 });
             } catch (err) {
-                Logging.logMessage("Error in Create Smart Shape: " + err.toString(),true);
+                Logging.logMessage("Error in Create Smart Shape: " + err.toString(), true);
             } finally {
                 app.endUndoGroup();
             }
         };
 
+        // Create "Convert to Smart Shape" Button
         var convertBtn = buttonGroup.add("button", [0, 0, 28, 28], "C");
         convertBtn.onClick = function() {
             app.beginUndoGroup("Convert to Smart Shape");
             try {
                 ShapeFunctions.convertToSmartShape();
             } catch (err) {
-                Logging.logMessage("Error in Convert Smart Shape: " + err.toString(),true);
+                Logging.logMessage("Error in Convert Smart Shape: " + err.toString(), true);
+            } finally {
+                app.endUndoGroup();
+            }
+        };
+    }
+
+    // Create the Button Group with "Create Smart Text" and "Convert" Buttons
+    function createTextButtonGroup(parent) {
+        var textGroup = parent.add("group");
+        textGroup.orientation = "column";
+        textGroup.alignChildren = ["left", "top"];
+        textGroup.spacing = 10; // Add some spacing between groups
+
+        var buttonGroup = textGroup.add("group");
+        buttonGroup.orientation = "row";
+        buttonGroup.alignChildren = ["left", "center"];
+        buttonGroup.spacing = 10; // Add spacing between buttons
+
+        // Create "Create Smart Text" Button
+        var createTextBtn = buttonGroup.add("button", undefined, "Create Smart Text");
+        createTextBtn.onClick = function() {
+            app.beginUndoGroup("Create Smart Text");
+            try {
+                var comp = app.project.activeItem;
+                if (!comp || !(comp instanceof CompItem)) {
+                    Logging.logMessage("Please select a composition.", true);
+                    return;
+                }
+
+                // Create the smart text layer
+                TextFunctions.createSmartText({
+                    // Pass any necessary configuration properties (if needed)
+                    separateDimensions: separateDimsCheckbox.value
+                });
+            } catch (err) {
+                Logging.logMessage("Error in Create Smart Text: " + err.toString(), true);
             } finally {
                 app.endUndoGroup();
             }
         };
 
-        var smartBackgroundButton = mainGroup.add("button", undefined, "Smart Background");
-        smartBackgroundButton.graphics.foregroundColor = smartBackgroundButton.graphics.newPen(
-            smartBackgroundButton.graphics.PenType.SOLID_COLOR,
+        // Create "Convert to Smart Text" Button
+        var convertTextBtn = buttonGroup.add("button", [0, 0, 28, 28], "C");
+        convertTextBtn.onClick = function() {
+            app.beginUndoGroup("Convert to Smart Text");
+            try {
+                TextFunctions.convertToSmartText();
+            } catch (err) {
+                Logging.logMessage("Error in Convert to Smart Text: " + err.toString(), true);
+            } finally {
+                app.endUndoGroup();
+            }
+        };
+    }
+
+    // Create the Button Group for Smart Background
+    function createBackgroundButtonGroup(parent) {
+        var backgroundGroup = parent.add("group");
+        backgroundGroup.orientation = "column";
+        backgroundGroup.alignChildren = ["left", "top"];
+        backgroundGroup.spacing = 10; // Add some spacing between groups
+
+        // Create "Create Smart Background" Button
+        var createBackgroundBtn = backgroundGroup.add("button", undefined, "Create Smart Background");
+        createBackgroundBtn.graphics.foregroundColor = createBackgroundBtn.graphics.newPen(
+            createBackgroundBtn.graphics.PenType.SOLID_COLOR,
             [0.5, 0.3, 0.2],
             1
         );
 
-        smartBackgroundButton.onClick = function() {
+        createBackgroundBtn.onClick = function() {
             app.beginUndoGroup("Create Smart Background");
             try {
                 var comp = app.project.activeItem;
                 if (!comp || !(comp instanceof CompItem)) {
-                    Logging.logMessage("Please select a composition.");
+                    Logging.logMessage("Please select a composition.", true);
                     return;
                 }
 
@@ -117,20 +182,22 @@ var UI = (function() {
 
                 var newBackgroundName = newBackgroundNumber === 1 ? "Background" : "Background " + newBackgroundNumber;
 
-                var newBackgroundLayer = createSmartShape({
+                var newBackgroundLayer = ShapeFunctions.createSmartShape({
                     isBackground: true,
                     name: newBackgroundName,
                     label: 12,
-                    fillColor: getCurrentFillColor()
+                    fillColor: getCurrentFillColor(),
+                    separateDimensions: separateDimsCheckbox.value // Pass separate dimensions value
                 });
 
             } catch (err) {
-                Logging.logMessage("Error in Smart Background button: " + err.toString(),true);
+                Logging.logMessage("Error in Create Smart Background: " + err.toString(), true);
             } finally {
                 app.endUndoGroup();
             }
         };
     }
+
     // Get the Current Fill Color from the Color Picker
     function getCurrentFillColor() {
         if (pickColorArea && pickColorArea.currentColor) {
@@ -327,6 +394,8 @@ var UI = (function() {
     // Return the public API
     return {
         createShapeButtonGroup: createShapeButtonGroup,
+        createTextButtonGroup: createTextButtonGroup,
+        createBackgroundButtonGroup: createBackgroundButtonGroup,
         createColorPicker: createColorPicker,
         createSeparateDimsCheckbox: createSeparateDimsCheckbox,
         getCurrentFillColor: getCurrentFillColor,

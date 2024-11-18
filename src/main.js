@@ -4,10 +4,12 @@
     function smartShapesPanel(thisObj) {
         var myPanel = (thisObj instanceof Panel)
             ? thisObj
-            : new Window("palette", "Smart Shapes v1.0.0", undefined);
+            : new Window("palette", "Smart Shapes v1.1.0", undefined);
 
         // Use UI module functions
         UI.createShapeButtonGroup(myPanel);
+        UI.createTextButtonGroup(myPanel);
+        UI.createBackgroundButtonGroup(myPanel);
         UI.createColorPicker(myPanel);
         UI.createSeparateDimsCheckbox(myPanel);
         UI.createShowLogButton(myPanel);

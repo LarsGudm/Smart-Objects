@@ -42,15 +42,28 @@ var Utilities = {
     },
 
     extractExpression: function(func) {
+        if (typeof func !== 'function') {
+            throw new Error("Utilities.extractExpression expected a function, but got " + typeof func);
+        }
         var funcStr = func.toString();
-        var match = funcStr.match(/\/\*([\s\S]*?)\*\//);
-        if (match && match[1]) {
-            var expressionStr = match[1].replace(/^\s+|\s+$/g, ''); // Remove leading/trailing whitespace
+        // Regular expression to match all multi-line comments
+        var regex = /\/\*([\s\S]*?)\*\//g;
+        var matches = [];
+        var match;
+        while ((match = regex.exec(funcStr)) !== null) {
+            matches.push(match[1]);
+        }
+        if (matches.length > 0) {
+            // If there are multiple matches, select the one that contains your expression.
+            // Assuming the longest comment is the expression:
+            var expressionStr = matches.reduce(function(a, b) {
+                return a.length > b.length ? a : b;
+            }).replace(/^\s+|\s+$/g, ''); // Remove leading/trailing whitespace
             return expressionStr;
         } else {
             return '';
         }
-    },
+    },    
 
     findFirstFillColor: function(group) {
         var fillColor = null;

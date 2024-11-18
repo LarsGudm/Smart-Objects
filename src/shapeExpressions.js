@@ -1,4 +1,5 @@
 // src/shapeExpressions.js
+var ShapeExpressions = (function() {
 
 function rectShapePathExpression() {
     /*
@@ -488,7 +489,7 @@ function rectShapePathExpression() {
     }
     */
     }    
-    function rectShapeSizeCalculatedExpression() {
+    function sizeCalculatedExpression() {
     /*
     // Expression to calculate widthCalculated
     var control = effect("Smart Shape Control");
@@ -658,4 +659,16 @@ function rectShapePathExpression() {
     */
     }
     
-    
+    return {
+    rectShapePathExpression: rectShapePathExpression,
+    ellipseShapePathExpression: ellipseShapePathExpression,
+    boundingBoxPathExpression: boundingBoxPathExpression,
+    innerPathExpression: innerPathExpression,
+    anchorPointPathExpression: anchorPointPathExpression,
+    sizeCalculatedExpression: sizeCalculatedExpression,
+	boundBoxSizeExpression: boundBoxSizeExpression,
+	innerPathSizeExpression: innerPathSizeExpression,
+    groupPositionExpression: groupPositionExpression
+};
+
+})();

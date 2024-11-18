@@ -43,15 +43,28 @@ var Utilities = {
     },
 
     extractExpression: function(func) {
+        if (typeof func !== 'function') {
+            throw new Error("Utilities.extractExpression expected a function, but got " + typeof func);
+        }
         var funcStr = func.toString();
-        var match = funcStr.match(/\/\*([\s\S]*?)\*\//);
-        if (match && match[1]) {
-            var expressionStr = match[1].replace(/^\s+|\s+$/g, ''); // Remove leading/trailing whitespace
+        // Regular expression to match all multi-line comments
+        var regex = /\/\*([\s\S]*?)\*\//g;
+        var matches = [];
+        var match;
+        while ((match = regex.exec(funcStr)) !== null) {
+            matches.push(match[1]);
+        }
+        if (matches.length > 0) {
+            // If there are multiple matches, select the one that contains your expression.
+            // Assuming the longest comment is the expression:
+            var expressionStr = matches.reduce(function(a, b) {
+                return a.length > b.length ? a : b;
+            }).replace(/^\s+|\s+$/g, ''); // Remove leading/trailing whitespace
             return expressionStr;
         } else {
             return '';
         }
-    },
+    },    
 
     findFirstFillColor: function(group) {
         var fillColor = null;
@@ -149,6 +162,7 @@ var Logging = (function() {
 })();
 
 // src/shapeExpressions.js
+var ShapeExpressions = (function() {
 
 function rectShapePathExpression() {
     /*
@@ -638,7 +652,7 @@ function rectShapePathExpression() {
     }
     */
     }    
-    function rectShapeSizeCalculatedExpression() {
+    function sizeCalculatedExpression() {
     /*
     // Expression to calculate widthCalculated
     var control = effect("Smart Shape Control");
@@ -808,7 +822,19 @@ function rectShapePathExpression() {
     */
     }
     
-    
+    return {
+    rectShapePathExpression: rectShapePathExpression,
+    ellipseShapePathExpression: ellipseShapePathExpression,
+    boundingBoxPathExpression: boundingBoxPathExpression,
+    innerPathExpression: innerPathExpression,
+    anchorPointPathExpression: anchorPointPathExpression,
+    sizeCalculatedExpression: sizeCalculatedExpression,
+	boundBoxSizeExpression: boundBoxSizeExpression,
+	innerPathSizeExpression: innerPathSizeExpression,
+    groupPositionExpression: groupPositionExpression
+};
+
+})();
 // src/shapeFunctions.js
 var ShapeFunctions = (function() {
     // Default Shape Configuration
@@ -824,37 +850,42 @@ var ShapeFunctions = (function() {
         separateDimensions: false, // Add default for separate dimensions
     };
 
+    function mergeProperties(defaults, properties) {
+        var result = {};
+        for (var key in defaults) {
+            result[key] = defaults[key];
+        }
+        for (var key in properties) {
+            if (properties[key] !== undefined) {
+                result[key] = properties[key];
+            }
+        }
+        return result;
+    }
+
     function createSmartShape(properties) {
         var comp = app.project.activeItem;
         if (!comp || !(comp instanceof CompItem)) {
             Logging.logMessage("Please select a composition.");
             return;
         }
-    
+
         // Merge properties with defaults
-        var config = {};
-        for (var key in defaultShapeConfig) {
-            config[key] = defaultShapeConfig[key];
-        }
-        for (var key in properties) {
-            if (properties[key] !== undefined) {
-                config[key] = properties[key];
-            }
-        }
-    
+        var config = mergeProperties(defaultShapeConfig, properties);
+
         var shapeLayer;
     
         if (config.targetLayer && !config.createMatte) {
             // If converting an existing layer
             shapeLayer = config.targetLayer.duplicate();
             shapeLayer.moveBefore(config.targetLayer);
-            shapeLayer.property("Transform").property("Anchor Point").setValue([0, 0]);
         } else {
             // Create a new shape layer
             shapeLayer = comp.layers.addShape();
-            shapeLayer.property("Transform").property("Anchor Point").setValue([0, 0]);
         }
-    
+
+        shapeLayer.property("Transform").property("Anchor Point").setValue([0, 0]);
+
         shapeLayer.name = config.name;
         shapeLayer.label = config.label;
     
@@ -902,31 +933,11 @@ var ShapeFunctions = (function() {
         Logging.logMessage("Set dimensionsSeparated to " + config.separateDimensions);
     
         var smartShapeControl = shapeLayer.effect('Smart Shape Control');
-    
-        // Set size values if not a background
+        
+        // Shape settings
         if (!config.isBackground) {
             smartShapeControl.property("Width").setValue(layerInfo.width);
             smartShapeControl.property("Height").setValue(layerInfo.height);
-        } else {
-            smartShapeControl.property("Width").expression =
-                "thisComp.width + effect('Smart Shape Control')('Padding Width').value * 2;";
-            smartShapeControl.property("Height").expression =
-                "thisComp.height + effect('Smart Shape Control')('Padding Height').value * 2;";
-            if (!separateDimsCheckbox.value) {
-                shapeLayer.property("Transform").property("Position").expression =
-                    "[thisComp.width/2, thisComp.height/2];";
-            } else {
-                shapeLayer.property("Transform").property("X Position").expression = "thisComp.width/2";
-                shapeLayer.property("Transform").property("Y Position").expression = "thisComp.height/2";
-            }
-        }
-    
-        // Set Position
-        if (config.isBackground) {
-            shapeLayer.moveToEnd();
-            shapeLayer.shy = true;
-            shapeLayer.locked = true;
-        } else {
             if (config.separateDimensions) {
                 Logging.logMessage("Dimensions are separated. Setting X and Y Position individually.");
                 shapeLayer.property("Transform").property("X Position").setValue(layerInfo.center[0]);
@@ -935,6 +946,25 @@ var ShapeFunctions = (function() {
                 Logging.logMessage("Dimensions are not separated. Setting Position.");
                 shapeLayer.property("Transform").property("Position").setValue(layerInfo.center);
             }
+            
+        //Background settings
+        } else {
+            smartShapeControl.property("Width").expression =
+            "thisComp.width + effect('Smart Shape Control')('Padding Width').value * 2;";
+            smartShapeControl.property("Height").expression =
+                "thisComp.height + effect('Smart Shape Control')('Padding Height').value * 2;";
+            if (!config.separateDimensions) {
+                shapeLayer.property("Transform").property("Position").expression =
+                    "[thisComp.width/2, thisComp.height/2];";
+            } else {
+                shapeLayer.property("Transform").property("X Position").expression = "thisComp.width/2";
+                shapeLayer.property("Transform").property("Y Position").expression = "thisComp.height/2";
+            }
+            smartShapeControl.property("Draw Guides").setValue(false);
+
+            shapeLayer.moveToEnd();
+            shapeLayer.shy = true;
+            shapeLayer.locked = true;
         }
     
         // Handle mattes and layer stack
@@ -1068,16 +1098,16 @@ var ShapeFunctions = (function() {
     
         // Extract the Expressions
         try {
-            var rectShapeExprString = Utilities.extractExpression(rectShapePathExpression);
-            var ellipseShapeExprString = Utilities.extractExpression(ellipseShapePathExpression);
-            var boundPathExprString = Utilities.extractExpression(boundingBoxPathExpression);
-            var innerPathExprString = Utilities.extractExpression(innerPathExpression);
-            var anchorGuideExprString = Utilities.extractExpression(anchorPointPathExpression);
+            var rectShapeExprString = Utilities.extractExpression(ShapeExpressions.rectShapePathExpression);
+            var ellipseShapeExprString = Utilities.extractExpression(ShapeExpressions.ellipseShapePathExpression);
+            var boundPathExprString = Utilities.extractExpression(ShapeExpressions.boundingBoxPathExpression);
+            var innerPathExprString = Utilities.extractExpression(ShapeExpressions.innerPathExpression);
+            var anchorGuideExprString = Utilities.extractExpression(ShapeExpressions.anchorPointPathExpression);
     
-            var sizeCalcExprString = Utilities.extractExpression(rectShapeSizeCalculatedExpression);
-            var groupPositionExprString = Utilities.extractExpression(groupPositionExpression);
-            var boundBoxSizeExprString = Utilities.extractExpression(boundBoxSizeExpression);
-            var innerPathSizeExprString = Utilities.extractExpression(innerPathSizeExpression);
+            var sizeCalcExprString = Utilities.extractExpression(ShapeExpressions.sizeCalculatedExpression);
+            var groupPositionExprString = Utilities.extractExpression(ShapeExpressions.groupPositionExpression);
+            var boundBoxSizeExprString = Utilities.extractExpression(ShapeExpressions.boundBoxSizeExpression);
+            var innerPathSizeExprString = Utilities.extractExpression(ShapeExpressions.innerPathSizeExpression);
     
         } catch (e) {
             Logging.logMessage("Error extracting expressions: " + e.toString(),true);
@@ -1128,6 +1158,149 @@ var ShapeFunctions = (function() {
     };
 })();
 
+// src/textExpressions.js
+
+var TextExpressions = (function() {
+
+function anchorPointExpression() {
+/*
+var control =  effect("Smart Text Control")
+var boundingBoxSize = control("Bounding Box Size").value;
+var anchorPctX = control("Align X Anchor %")/100;
+var anchorPctY = control("Align Y Anchor %")/100;
+var boundBoxAnchor = control("Bounding Box Anchor").value;
+var leftTopValues = control("Left & Top Values").value;
+if (boundBoxAnchor==0){
+value;
+}else{
+var x = (boundingBoxSize[0] / 2) * anchorPctX + leftTopValues[0] + (boundingBoxSize[0] / 2);
+var y = (boundingBoxSize[1] / 2) * anchorPctY + leftTopValues[1] + (boundingBoxSize[1] / 2);
+[x,y]
+}
+*/
+}
+
+function boundBoxSizeExpression() {
+/*
+var rectWidth = thisLayer.sourceRectAtTime().width;
+var rectHeight = thisLayer.sourceRectAtTime().height;
+[rectWidth, rectHeight];
+*/
+}
+
+function leftTopValuesExpression() {
+/*
+var rectLeft = thisLayer.sourceRectAtTime().left;
+var rectTop = thisLayer.sourceRectAtTime().top;
+[rectLeft, rectTop];
+*/
+}
+
+// Expose the functions via the TextExpressions object
+return {
+	anchorPointExpression: anchorPointExpression,
+	boundBoxSizeExpression: boundBoxSizeExpression,
+	leftTopValuesExpression: leftTopValuesExpression
+};
+
+})();
+// src/textFunctions.js
+var TextFunctions = (function() {
+    function createSmartText(properties) {
+        var comp = app.project.activeItem;
+        if (!comp || !(comp instanceof CompItem)) {
+            Logging.logMessage("Please select a composition.", true);
+            return;
+        }
+
+        // Merge properties with defaults (if any)
+        var config = properties || {};
+
+        // Create a new text layer with default settings
+        var textLayer = comp.layers.addText("Smart Text");
+
+        // Apply the Smart Text preset
+        addSmartProperties(textLayer);
+
+        // Additional setup or property adjustments can be added here
+
+        Logging.logMessage("Smart Text layer created and preset applied.", false);
+
+        return textLayer;
+    }
+
+    function convertToSmartText() {
+        var comp = app.project.activeItem;
+        if (!comp || !(comp instanceof CompItem)) {
+            Logging.logMessage("Please select a composition.", true);
+            return;
+        }
+
+        var selectedLayers = comp.selectedLayers;
+        if (selectedLayers.length === 0) {
+            Logging.logMessage("Please select at least one text layer.", true);
+            return;
+        }
+
+        for (var i = 0; i < selectedLayers.length; i++) {
+            var layer = selectedLayers[i];
+
+            if (!(layer instanceof TextLayer)) {
+                Logging.logMessage("Skipping non-text layer: " + layer.name, false);
+                continue;
+            }
+
+            Logging.logMessage("Processing layer: " + layer.name, false);
+
+            // Apply the Smart Text preset
+            applySmartTextPreset(layer);
+        }
+    }
+
+    function addSmartProperties(textLayer) {
+        // Path to the FFX file
+        var scriptFolder = new File($.fileName).parent;
+        var ffxFile = new File(scriptFolder.fsName + "/FFX/SmartTextControl_V01.ffx");
+
+        if (ffxFile.exists) {
+            Logging.logMessage("Applying preset: " + ffxFile.fsName, false);
+            textLayer.applyPreset(ffxFile);
+            Logging.logMessage("Preset applied successfully to " + textLayer.name, false);
+        } else {
+            Logging.logMessage("Preset file not found: " + ffxFile.fsName, true);
+            return null;
+        }
+
+        // Extract the Expressions
+        try {
+            var anchorPointExprString = Utilities.extractExpression(TextExpressions.anchorPointExpression);
+            var boundBoxSizeExprString = Utilities.extractExpression(TextExpressions.boundBoxSizeExpression);
+            var leftTopValuesExprString = Utilities.extractExpression(TextExpressions.leftTopValuesExpression);
+    
+        } catch (e) {
+            Logging.logMessage("Error extracting expressions: " + e.toString(),true);
+            return null;
+        }
+        var smartTextControl = textLayer.effect('Smart Text Control');
+        // Apply Expressions to properties
+        try {
+            // Apply Expressions to expression controls
+            textLayer.property("Transform").property("Anchor Point").expression = anchorPointExprString;
+            smartTextControl.property("Bounding Box Size").expression = boundBoxSizeExprString;
+            smartTextControl.property("Left & Top Values").expression = leftTopValuesExprString;
+    
+        } catch (e) {
+            Logging.logMessage("Failed to set smart properties on the text layer: " + e.toString(),true);
+            return null;
+        }
+    }
+    // Return the public API
+    return {
+        createSmartText: createSmartText,
+        convertToSmartText: convertToSmartText
+    };
+})();
+
 // src/ui.js
 
 // UI Module
@@ -1141,27 +1314,33 @@ var UI = (function() {
     var settingsFilePath = scriptFolderPath + "/SmartShapesSettings.txt";
 
     // Create the Button Group with "Create" and "Convert" Buttons
+    // Create the Button Group with "Create Smart Shape" and "Convert" Buttons
     function createShapeButtonGroup(parent) {
-        var mainGroup = parent.add("group");
-        mainGroup.orientation = "column";
+        var shapeGroup = parent.add("group");
+        shapeGroup.orientation = "column";
+        shapeGroup.alignChildren = ["left", "top"];
+        shapeGroup.spacing = 10; // Add some spacing between groups
 
-        var buttonGroup = mainGroup.add("group");
+        var buttonGroup = shapeGroup.add("group");
         buttonGroup.orientation = "row";
+        buttonGroup.alignChildren = ["left", "center"];
+        buttonGroup.spacing = 10; // Add spacing between buttons
 
+        // Create "Create Smart Shape" Button
         var createShapeBtn = buttonGroup.add("button", undefined, "Create Smart Shape");
         createShapeBtn.onClick = function() {
             app.beginUndoGroup("Create Smart Shape");
             try {
                 var comp = app.project.activeItem;
                 if (!comp || !(comp instanceof CompItem)) {
-                    Logging.logMessage("Please select a composition.");
+                    Logging.logMessage("Please select a composition.", true);
                     return;
                 }
-        
+
                 var selectedLayers = comp.selectedLayers;
                 var createMatte = false;
                 var targetLayer = null;
-        
+
                 if (selectedLayers.length > 0) {
                     // There are selected layers. Ask the user about matte options.
                     var result = showMatteOptionsDialog();
@@ -1177,45 +1356,104 @@ var UI = (function() {
                         return; // Exit the function
                     }
                 }
-        
+
                 ShapeFunctions.createSmartShape({
-                    fillColor: getCurrentFillColor(), // Use the function from UI module
+                    fillColor: getCurrentFillColor(), // Pass the current fill color
                     targetLayer: targetLayer,
                     createMatte: createMatte,
-                    separateDimensions: separateDimsCheckbox.value // Pass the value directly
+                    separateDimensions: separateDimsCheckbox.value // Pass separate dimensions value
                 });
             } catch (err) {
-                Logging.logMessage("Error in Create Smart Shape: " + err.toString(),true);
+                Logging.logMessage("Error in Create Smart Shape: " + err.toString(), true);
             } finally {
                 app.endUndoGroup();
             }
         };
 
+        // Create "Convert to Smart Shape" Button
         var convertBtn = buttonGroup.add("button", [0, 0, 28, 28], "C");
         convertBtn.onClick = function() {
             app.beginUndoGroup("Convert to Smart Shape");
             try {
                 ShapeFunctions.convertToSmartShape();
             } catch (err) {
-                Logging.logMessage("Error in Convert Smart Shape: " + err.toString(),true);
+                Logging.logMessage("Error in Convert Smart Shape: " + err.toString(), true);
+            } finally {
+                app.endUndoGroup();
+            }
+        };
+    }
+
+    // Create the Button Group with "Create Smart Text" and "Convert" Buttons
+    function createTextButtonGroup(parent) {
+        var textGroup = parent.add("group");
+        textGroup.orientation = "column";
+        textGroup.alignChildren = ["left", "top"];
+        textGroup.spacing = 10; // Add some spacing between groups
+
+        var buttonGroup = textGroup.add("group");
+        buttonGroup.orientation = "row";
+        buttonGroup.alignChildren = ["left", "center"];
+        buttonGroup.spacing = 10; // Add spacing between buttons
+
+        // Create "Create Smart Text" Button
+        var createTextBtn = buttonGroup.add("button", undefined, "Create Smart Text");
+        createTextBtn.onClick = function() {
+            app.beginUndoGroup("Create Smart Text");
+            try {
+                var comp = app.project.activeItem;
+                if (!comp || !(comp instanceof CompItem)) {
+                    Logging.logMessage("Please select a composition.", true);
+                    return;
+                }
+
+                // Create the smart text layer
+                TextFunctions.createSmartText({
+                    // Pass any necessary configuration properties (if needed)
+                    separateDimensions: separateDimsCheckbox.value
+                });
+            } catch (err) {
+                Logging.logMessage("Error in Create Smart Text: " + err.toString(), true);
             } finally {
                 app.endUndoGroup();
             }
         };
 
-        var smartBackgroundButton = mainGroup.add("button", undefined, "Smart Background");
-        smartBackgroundButton.graphics.foregroundColor = smartBackgroundButton.graphics.newPen(
-            smartBackgroundButton.graphics.PenType.SOLID_COLOR,
+        // Create "Convert to Smart Text" Button
+        var convertTextBtn = buttonGroup.add("button", [0, 0, 28, 28], "C");
+        convertTextBtn.onClick = function() {
+            app.beginUndoGroup("Convert to Smart Text");
+            try {
+                TextFunctions.convertToSmartText();
+            } catch (err) {
+                Logging.logMessage("Error in Convert to Smart Text: " + err.toString(), true);
+            } finally {
+                app.endUndoGroup();
+            }
+        };
+    }
+
+    // Create the Button Group for Smart Background
+    function createBackgroundButtonGroup(parent) {
+        var backgroundGroup = parent.add("group");
+        backgroundGroup.orientation = "column";
+        backgroundGroup.alignChildren = ["left", "top"];
+        backgroundGroup.spacing = 10; // Add some spacing between groups
+
+        // Create "Create Smart Background" Button
+        var createBackgroundBtn = backgroundGroup.add("button", undefined, "Create Smart Background");
+        createBackgroundBtn.graphics.foregroundColor = createBackgroundBtn.graphics.newPen(
+            createBackgroundBtn.graphics.PenType.SOLID_COLOR,
             [0.5, 0.3, 0.2],
             1
         );
 
-        smartBackgroundButton.onClick = function() {
+        createBackgroundBtn.onClick = function() {
             app.beginUndoGroup("Create Smart Background");
             try {
                 var comp = app.project.activeItem;
                 if (!comp || !(comp instanceof CompItem)) {
-                    Logging.logMessage("Please select a composition.");
+                    Logging.logMessage("Please select a composition.", true);
                     return;
                 }
 
@@ -1247,20 +1485,22 @@ var UI = (function() {
 
                 var newBackgroundName = newBackgroundNumber === 1 ? "Background" : "Background " + newBackgroundNumber;
 
-                var newBackgroundLayer = createSmartShape({
+                var newBackgroundLayer = ShapeFunctions.createSmartShape({
                     isBackground: true,
                     name: newBackgroundName,
                     label: 12,
-                    fillColor: getCurrentFillColor()
+                    fillColor: getCurrentFillColor(),
+                    separateDimensions: separateDimsCheckbox.value // Pass separate dimensions value
                 });
 
             } catch (err) {
-                Logging.logMessage("Error in Smart Background button: " + err.toString(),true);
+                Logging.logMessage("Error in Create Smart Background: " + err.toString(), true);
             } finally {
                 app.endUndoGroup();
             }
         };
     }
+
     // Get the Current Fill Color from the Color Picker
     function getCurrentFillColor() {
         if (pickColorArea && pickColorArea.currentColor) {
@@ -1457,6 +1697,8 @@ var UI = (function() {
     // Return the public API
     return {
         createShapeButtonGroup: createShapeButtonGroup,
+        createTextButtonGroup: createTextButtonGroup,
+        createBackgroundButtonGroup: createBackgroundButtonGroup,
         createColorPicker: createColorPicker,
         createSeparateDimsCheckbox: createSeparateDimsCheckbox,
         getCurrentFillColor: getCurrentFillColor,
@@ -1483,6 +1725,8 @@ var UI = (function() {
 
         // Use UI module functions
         UI.createShapeButtonGroup(myPanel);
+        UI.createTextButtonGroup(myPanel);
+        UI.createBackgroundButtonGroup(myPanel);
         UI.createColorPicker(myPanel);
         UI.createSeparateDimsCheckbox(myPanel);
         UI.createShowLogButton(myPanel);

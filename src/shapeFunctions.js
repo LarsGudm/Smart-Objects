@@ -13,37 +13,42 @@ var ShapeFunctions = (function() {
         separateDimensions: false, // Add default for separate dimensions
     };
 
+    function mergeProperties(defaults, properties) {
+        var result = {};
+        for (var key in defaults) {
+            result[key] = defaults[key];
+        }
+        for (var key in properties) {
+            if (properties[key] !== undefined) {
+                result[key] = properties[key];
+            }
+        }
+        return result;
+    }
+
     function createSmartShape(properties) {
         var comp = app.project.activeItem;
         if (!comp || !(comp instanceof CompItem)) {
             Logging.logMessage("Please select a composition.");
             return;
         }
-    
+
         // Merge properties with defaults
-        var config = {};
-        for (var key in defaultShapeConfig) {
-            config[key] = defaultShapeConfig[key];
-        }
-        for (var key in properties) {
-            if (properties[key] !== undefined) {
-                config[key] = properties[key];
-            }
-        }
-    
+        var config = mergeProperties(defaultShapeConfig, properties);
+
         var shapeLayer;
     
         if (config.targetLayer && !config.createMatte) {
             // If converting an existing layer
             shapeLayer = config.targetLayer.duplicate();
             shapeLayer.moveBefore(config.targetLayer);
-            shapeLayer.property("Transform").property("Anchor Point").setValue([0, 0]);
         } else {
             // Create a new shape layer
             shapeLayer = comp.layers.addShape();
-            shapeLayer.property("Transform").property("Anchor Point").setValue([0, 0]);
         }
-    
+
+        shapeLayer.property("Transform").property("Anchor Point").setValue([0, 0]);
+
         shapeLayer.name = config.name;
         shapeLayer.label = config.label;
     
@@ -91,31 +96,11 @@ var ShapeFunctions = (function() {
         Logging.logMessage("Set dimensionsSeparated to " + config.separateDimensions);
     
         var smartShapeControl = shapeLayer.effect('Smart Shape Control');
-    
-        // Set size values if not a background
+        
+        // Shape settings
         if (!config.isBackground) {
             smartShapeControl.property("Width").setValue(layerInfo.width);
             smartShapeControl.property("Height").setValue(layerInfo.height);
-        } else {
-            smartShapeControl.property("Width").expression =
-                "thisComp.width + effect('Smart Shape Control')('Padding Width').value * 2;";
-            smartShapeControl.property("Height").expression =
-                "thisComp.height + effect('Smart Shape Control')('Padding Height').value * 2;";
-            if (!separateDimsCheckbox.value) {
-                shapeLayer.property("Transform").property("Position").expression =
-                    "[thisComp.width/2, thisComp.height/2];";
-            } else {
-                shapeLayer.property("Transform").property("X Position").expression = "thisComp.width/2";
-                shapeLayer.property("Transform").property("Y Position").expression = "thisComp.height/2";
-            }
-        }
-    
-        // Set Position
-        if (config.isBackground) {
-            shapeLayer.moveToEnd();
-            shapeLayer.shy = true;
-            shapeLayer.locked = true;
-        } else {
             if (config.separateDimensions) {
                 Logging.logMessage("Dimensions are separated. Setting X and Y Position individually.");
                 shapeLayer.property("Transform").property("X Position").setValue(layerInfo.center[0]);
@@ -124,6 +109,25 @@ var ShapeFunctions = (function() {
                 Logging.logMessage("Dimensions are not separated. Setting Position.");
                 shapeLayer.property("Transform").property("Position").setValue(layerInfo.center);
             }
+            
+        //Background settings
+        } else {
+            smartShapeControl.property("Width").expression =
+            "thisComp.width + effect('Smart Shape Control')('Padding Width').value * 2;";
+            smartShapeControl.property("Height").expression =
+                "thisComp.height + effect('Smart Shape Control')('Padding Height').value * 2;";
+            if (!config.separateDimensions) {
+                shapeLayer.property("Transform").property("Position").expression =
+                    "[thisComp.width/2, thisComp.height/2];";
+            } else {
+                shapeLayer.property("Transform").property("X Position").expression = "thisComp.width/2";
+                shapeLayer.property("Transform").property("Y Position").expression = "thisComp.height/2";
+            }
+            smartShapeControl.property("Draw Guides").setValue(false);
+
+            shapeLayer.moveToEnd();
+            shapeLayer.shy = true;
+            shapeLayer.locked = true;
         }
     
         // Handle mattes and layer stack
@@ -257,16 +261,16 @@ var ShapeFunctions = (function() {
     
         // Extract the Expressions
         try {
-            var rectShapeExprString = Utilities.extractExpression(rectShapePathExpression);
-            var ellipseShapeExprString = Utilities.extractExpression(ellipseShapePathExpression);
-            var boundPathExprString = Utilities.extractExpression(boundingBoxPathExpression);
-            var innerPathExprString = Utilities.extractExpression(innerPathExpression);
-            var anchorGuideExprString = Utilities.extractExpression(anchorPointPathExpression);
+            var rectShapeExprString = Utilities.extractExpression(ShapeExpressions.rectShapePathExpression);
+            var ellipseShapeExprString = Utilities.extractExpression(ShapeExpressions.ellipseShapePathExpression);
+            var boundPathExprString = Utilities.extractExpression(ShapeExpressions.boundingBoxPathExpression);
+            var innerPathExprString = Utilities.extractExpression(ShapeExpressions.innerPathExpression);
+            var anchorGuideExprString = Utilities.extractExpression(ShapeExpressions.anchorPointPathExpression);
     
-            var sizeCalcExprString = Utilities.extractExpression(rectShapeSizeCalculatedExpression);
-            var groupPositionExprString = Utilities.extractExpression(groupPositionExpression);
-            var boundBoxSizeExprString = Utilities.extractExpression(boundBoxSizeExpression);
-            var innerPathSizeExprString = Utilities.extractExpression(innerPathSizeExpression);
+            var sizeCalcExprString = Utilities.extractExpression(ShapeExpressions.sizeCalculatedExpression);
+            var groupPositionExprString = Utilities.extractExpression(ShapeExpressions.groupPositionExpression);
+            var boundBoxSizeExprString = Utilities.extractExpression(ShapeExpressions.boundBoxSizeExpression);
+            var innerPathSizeExprString = Utilities.extractExpression(ShapeExpressions.innerPathSizeExpression);
     
         } catch (e) {
             Logging.logMessage("Error extracting expressions: " + e.toString(),true);

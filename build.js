@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const srcDir = path.join(__dirname, 'src');
-const outputFile = path.join(__dirname, 'SmartObjects_1.0.0.jsx');
+const outputFile = path.join(__dirname, 'SmartObjects_1.1.0.jsx');
 
 // Order matters if there are dependencies
 const files = [
@@ -11,6 +11,8 @@ const files = [
     'logging.js',
     'shapeExpressions.js',
     'shapeFunctions.js',
+    'textExpressions.js',
+    'textFunctions.js',
     'ui.js',
     'main.js',
 ];
@@ -46,3 +48,6 @@ if (process.argv.includes('--watch')) {
 
 //Use npm run build to build
 //Use npm run watch for auto updates
+//git checkout Smart-Text
+//git checkout main
+//use Control+C to stop any running code
