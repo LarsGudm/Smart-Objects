@@ -178,7 +178,7 @@ var ShapeFunctions = (function() {
             // Get fill color from original layer
             var fillColor = Utilities.findFirstFillColor(layer.property("Contents"));
             if (fillColor === null) {
-                fillColor = Utilities.getCurrentFillColor();
+                fillColor = UI.getCurrentFillColor();
                 Logging.logMessage("No fill color found, using color picker");
             }
     

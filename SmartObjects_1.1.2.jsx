@@ -1015,7 +1015,7 @@ var ShapeFunctions = (function() {
             // Get fill color from original layer
             var fillColor = Utilities.findFirstFillColor(layer.property("Contents"));
             if (fillColor === null) {
-                fillColor = Utilities.getCurrentFillColor();
+                fillColor = UI.getCurrentFillColor();
                 Logging.logMessage("No fill color found, using color picker");
             }
     
@@ -1721,7 +1721,7 @@ var UI = (function() {
     function smartShapesPanel(thisObj) {
         var myPanel = (thisObj instanceof Panel)
             ? thisObj
-            : new Window("palette", "Smart Shapes v1.1.0", undefined);
+            : new Window("palette", "Smart Shapes v1.1.2", undefined);
 
         // Use UI module functions
         UI.createShapeButtonGroup(myPanel);
