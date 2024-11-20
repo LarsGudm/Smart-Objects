@@ -47,7 +47,7 @@ var TextFunctions = (function() {
             Logging.logMessage("Processing layer: " + layer.name, false);
 
             // Apply the Smart Text preset
-            applySmartTextPreset(layer);
+            addSmartProperties(layer);
         }
     }
 

@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const srcDir = path.join(__dirname, 'src');
-const outputFile = path.join(__dirname, 'SmartObjects_1.2.0.jsx');
+const outputFile = path.join(__dirname, 'SmartObjects_1.2.2.jsx');
 
 // Order matters if there are dependencies
 const files = [
@@ -60,5 +60,6 @@ git push origin main
 TO DO:
 Remove inversion functionality. It wont be used and it doubles the amount of code
 Right angled Triangle logic is good without inversion
-Te
+Kanskje finne en måte og implementere ffxen i jsx fila. Så den er mye lettere å installere og teste i fremtida
+Også muligens gjør at builden ser på main sitt script panel navn for å lage builden, eller motsatt. Så slipper man å oppdatere to steder
 */

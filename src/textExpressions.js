@@ -2,6 +2,21 @@
 
 var TextExpressions = (function() {
 
+function sourceTextExpression() {
+/*
+var textSource = effect("Layer Control")("Layer");
+if (textSource == null){
+	var src = thisLayer;
+}else{
+	var src = thisComp.layer(textSource.index)
+}
+
+var txt=src.text.sourceText;
+var newStyle=txt.getStyleAt(0,0);
+newStyle.setText(txt)
+*/
+}
+
 function anchorPointExpression() {
 /*
 var control =  effect("Smart Text Control")
@@ -10,12 +25,17 @@ var anchorPctX = control("Align X Anchor %")/100;
 var anchorPctY = control("Align Y Anchor %")/100;
 var boundBoxAnchor = control("Bounding Box Anchor").value;
 var leftTopValues = control("Left & Top Values").value;
+
 if (boundBoxAnchor==0){
-value;
+	value;
 }else{
-var x = (boundingBoxSize[0] / 2) * anchorPctX + leftTopValues[0] + (boundingBoxSize[0] / 2);
-var y = (boundingBoxSize[1] / 2) * anchorPctY + leftTopValues[1] + (boundingBoxSize[1] / 2);
-[x,y]
+	var halfWidth = boundingBoxSize[0] / 2;
+	var halfHeight = boundingBoxSize[1] / 2;
+	var centerX = halfWidth + leftTopValues[0];
+	var centerY = halfHeight + leftTopValues[1];
+	var x = centerX + halfWidth * anchorPctX;
+	var y = centerY + halfHeight * anchorPctY;
+	[x,y]
 }
 */
 }
@@ -39,6 +59,7 @@ var rectTop = thisLayer.sourceRectAtTime().top;
 // Expose the functions via the TextExpressions object
 return {
 	anchorPointExpression: anchorPointExpression,
+	sourceTextExpression: sourceTextExpression,
 	boundBoxSizeExpression: boundBoxSizeExpression,
 	leftTopValuesExpression: leftTopValuesExpression
 };

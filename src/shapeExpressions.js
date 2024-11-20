@@ -235,82 +235,82 @@ createPath(vertices, inTangents, outTangents, closed);
     */
     }
     
-    function boundingBoxPathExpression() {
-    /*
-    // Check if the expression should be disabled
-    var control = effect("Smart Shape Control");
-    var disableExpression = control("Draw Guides").value;
-    
-    if (!disableExpression) {
-        value;
-    } else {
-        // Get parameters
-        var size = control("Bounding Box Size")
-    
-        // Get half dimensions
-        var halfWidth = size[0] / 2;
-        var halfHeight = size[1] / 2;
-    
-        // Padding
-        var uniformPadding = control("Uniform Padding").value;
-        if (!uniformPadding) {
-            var paddingWidth = control("Padding Width").value;
-            var paddingHeight = control("Padding Height").value;
-        }else{
-            var paddingWidth = control("Padding Width").value;
-            var paddingHeight = control("Padding Width").value;
-        }
-        var paddingWidth = Math.max(0,paddingWidth);
-        var paddingHeight = Math.max(0,paddingHeight);
-    
-        // Anchor controls
-        var anchorPctX = control("Align X Anchor %").value / 100;
-        var anchorPctY = control("Align Y Anchor %").value / 100;
-    
-        // Calculate the anchor offset in pixels
-        var anchorOffsetX = anchorPctX * size[0] / 2 - anchorPctX * paddingWidth;
-        var anchorOffsetY = anchorPctY * size[1] / 2 - anchorPctY * paddingHeight;
-    
-        // Adjusted corner positions based on anchor offsets
-        var c_TL = [-halfWidth - anchorOffsetX, -halfHeight - anchorOffsetY];
-        var c_TR = [halfWidth - anchorOffsetX, -halfHeight - anchorOffsetY];
-        var c_BR = [halfWidth - anchorOffsetX, halfHeight - anchorOffsetY];
-        var c_BL = [-halfWidth - anchorOffsetX, halfHeight - anchorOffsetY];
-    
-        // Define vertices in order
-        var vertices = [
-            c_TL,
-            c_TR,
-            c_BR,
-            c_BL
-        ];
-    
-        // InTangents and OutTangents remain zero
-        var inTangents = [
-            [0, 0],
-            [0, 0],
-            [0, 0],
-            [0, 0]
-        ];
-    
-        var outTangents = [
-            [0, 0],
-            [0, 0],
-            [0, 0],
-            [0, 0]
-        ];
-    
-        // Close the path
-        var closed = true;
-    
-        // Create the shape path
-        createPath(vertices, inTangents, outTangents, closed);
+function boundingBoxPathExpression() {
+/*
+// Check if the expression should be disabled
+var control = effect("Smart Shape Control");
+var disableExpression = control("Draw Guides").value;
+
+if (!disableExpression) {
+    value;
+} else {
+    // Get parameters
+    var size = control("Bounding Box Size")
+
+    // Get half dimensions
+    var halfWidth = size[0] / 2;
+    var halfHeight = size[1] / 2;
+
+    // Padding
+    var uniformPadding = control("Uniform Padding").value;
+    if (!uniformPadding) {
+        var paddingWidth = control("Padding Width").value;
+        var paddingHeight = control("Padding Height").value;
+    }else{
+        var paddingWidth = control("Padding Width").value;
+        var paddingHeight = control("Padding Width").value;
     }
-    */
-    }
+    var paddingWidth = Math.max(0,paddingWidth);
+    var paddingHeight = Math.max(0,paddingHeight);
+
+    // Anchor controls
+    var anchorPctX = control("Align X Anchor %").value / 100;
+    var anchorPctY = control("Align Y Anchor %").value / 100;
+
+    // Calculate the anchor offset in pixels
+    var anchorOffsetX = anchorPctX * size[0] / 2 - anchorPctX * paddingWidth;
+    var anchorOffsetY = anchorPctY * size[1] / 2 - anchorPctY * paddingHeight;
+
+    // Adjusted corner positions based on anchor offsets
+    var c_TL = [-halfWidth - anchorOffsetX, -halfHeight - anchorOffsetY];
+    var c_TR = [halfWidth - anchorOffsetX, -halfHeight - anchorOffsetY];
+    var c_BR = [halfWidth - anchorOffsetX, halfHeight - anchorOffsetY];
+    var c_BL = [-halfWidth - anchorOffsetX, halfHeight - anchorOffsetY];
+
+    // Define vertices in order
+    var vertices = [
+        c_TL,
+        c_TR,
+        c_BR,
+        c_BL
+    ];
+
+    // InTangents and OutTangents remain zero
+    var inTangents = [
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        [0, 0]
+    ];
+
+    var outTangents = [
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        [0, 0]
+    ];
+
+    // Close the path
+    var closed = true;
+
+    // Create the shape path
+    createPath(vertices, inTangents, outTangents, closed);
+}
+*/
+}
     
     function innerPathExpression() {
-        /*
+    /*
     // Check if the expression should be disabled
     var control = effect("Smart Shape Control");
     var disableExpression = control("Draw Guides").value;
@@ -488,6 +488,7 @@ createPath(vertices, inTangents, outTangents, closed);
     }
     */
     }    
+
     function sizeCalculatedExpression() {
     /*
     // Expression to calculate widthCalculated
@@ -556,39 +557,39 @@ createPath(vertices, inTangents, outTangents, closed);
     
     }
     
-    function boundBoxSizeExpression() {
-    /*
-    var control = effect("Smart Shape Control");
-    var targetLayer = control('Get size of Layer');
-    var uniformSize = control("Uniform Size").value;
-    var widthValue = control('Width').value;
-    var heightValue = control('Height').value;
-    
-    //Padding
-    var paddingWidth = control("Padding Width").value;
-    var paddingHeight = control("Padding Height").value;
-    var uniformPadding = control("Uniform Padding").value;
-    if (!uniformPadding) {
-        padding = [Math.max(0,paddingWidth), Math.max(0,paddingHeight)];
-    }else{
-        padding = [Math.max(0,paddingWidth), Math.max(0,paddingWidth)];
-    }
-    
-    // Get size values
-    if (targetLayer == null || targetLayer.index == thisLayer.index) {
-        size = [widthValue,(uniformSize == 1) ? widthValue : heightValue];
-    } else {
-        var layer = thisComp.layer(targetLayer.index);
-        var layerWidth = layer.sourceRectAtTime(time).width;
-        var layerHeight = layer.sourceRectAtTime(time).height;
-        size = [layerWidth, (uniformSize == 1) ? layerWidth : layerHeight];
-    }
-    var width = (size[0] + padding[0] * 2);
-    var height = (size[1] + padding[1] * 2);
-    [width , height];
-    */
-    }
-    
+function boundBoxSizeExpression() {
+/*
+var control = effect("Smart Shape Control");
+var targetLayer = control('Get size of Layer');
+var uniformSize = control("Uniform Size").value;
+var widthValue = Math.max(control('Width').value,0);
+var heightValue = Math.max(control('Height').value,0);
+
+//Padding
+var paddingWidth = control("Padding Width").value;
+var paddingHeight = control("Padding Height").value;
+var uniformPadding = control("Uniform Padding").value;
+if (!uniformPadding) {
+    padding = [Math.max(0,paddingWidth), Math.max(0,paddingHeight)];
+}else{
+    padding = [Math.max(0,paddingWidth), Math.max(0,paddingWidth)];
+}
+
+// Get size values
+if (targetLayer == null || targetLayer.index == thisLayer.index) {
+    size = [widthValue,(uniformSize == 1) ? widthValue : heightValue];
+} else {
+    var layer = thisComp.layer(targetLayer.index);
+    var layerWidth = layer.sourceRectAtTime(time).width;
+    var layerHeight = layer.sourceRectAtTime(time).height;
+    size = [layerWidth, (uniformSize == 1) ? layerWidth : layerHeight];
+}
+var width = (size[0] + padding[0] * 2);
+var height = (size[1] + padding[1] * 2);
+[width , height];
+*/
+}
+
     
     
     function innerPathSizeExpression() {
