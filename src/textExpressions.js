@@ -4,7 +4,8 @@ var TextExpressions = (function() {
 
 function sourceTextExpression() {
 /*
-var textSource = effect("Layer Control")("Layer");
+var control = effect("Smart Text Control");
+var textSource = control("Text Source");
 if (textSource == null){
 	var src = thisLayer;
 }else{
@@ -58,8 +59,8 @@ var rectTop = thisLayer.sourceRectAtTime().top;
 
 // Expose the functions via the TextExpressions object
 return {
-	anchorPointExpression: anchorPointExpression,
 	sourceTextExpression: sourceTextExpression,
+	anchorPointExpression: anchorPointExpression,
 	boundBoxSizeExpression: boundBoxSizeExpression,
 	leftTopValuesExpression: leftTopValuesExpression
 };

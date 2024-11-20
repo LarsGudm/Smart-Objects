@@ -67,10 +67,10 @@ var TextFunctions = (function() {
 
         // Extract the Expressions
         try {
+            var sourceTextExprString = Utilities.extractExpression(TextExpressions.sourceTextExpression);
             var anchorPointExprString = Utilities.extractExpression(TextExpressions.anchorPointExpression);
             var boundBoxSizeExprString = Utilities.extractExpression(TextExpressions.boundBoxSizeExpression);
             var leftTopValuesExprString = Utilities.extractExpression(TextExpressions.leftTopValuesExpression);
-    
         } catch (e) {
             Logging.logMessage("Error extracting expressions: " + e.toString(),true);
             return null;
@@ -79,6 +79,7 @@ var TextFunctions = (function() {
         // Apply Expressions to properties
         try {
             // Apply Expressions to expression controls
+            textLayer.property("ADBE Text Properties").property("ADBE Text Document").expression = sourceTextExprString;
             textLayer.property("Transform").property("Anchor Point").expression = anchorPointExprString;
             smartTextControl.property("Bounding Box Size").expression = boundBoxSizeExprString;
             smartTextControl.property("Left & Top Values").expression = leftTopValuesExprString;
