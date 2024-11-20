@@ -54,7 +54,7 @@ var TextFunctions = (function() {
     function addSmartProperties(textLayer) {
         // Path to the FFX file
         var scriptFolder = new File($.fileName).parent;
-        var ffxFile = new File(scriptFolder.fsName + "/FFX/SmartTextControl_V01.ffx");
+        var ffxFile = new File(scriptFolder.fsName + "/FFX/SmartTextControl.ffx");
 
         if (ffxFile.exists) {
             Logging.logMessage("Applying preset: " + ffxFile.fsName, false);

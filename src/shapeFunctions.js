@@ -239,7 +239,7 @@ var ShapeFunctions = (function() {
     
         // Apply the .ffx preset (requires the .ffx file)
         var scriptFolder = new File($.fileName).parent;
-        var ffxFile = new File(scriptFolder.fsName + "/FFX/SmartShapeControl_V04.ffx");
+        var ffxFile = new File(scriptFolder.fsName + "/FFX/SmartShapeControl.ffx");
     
         if (ffxFile.exists) {
             Logging.logMessage("Applying preset: " + ffxFile.fsName);

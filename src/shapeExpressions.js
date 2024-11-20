@@ -2,87 +2,105 @@
 var ShapeExpressions = (function() {
 
 function rectShapePathExpression() {
-    /*
-    // Define shape type
-    var control = effect("Smart Shape Control");
-    var shapeMenu = control("Shape Type").value;
-    if (shapeMenu!=1){
-        value;
-    }else{
-    // Get the calculated width and height, and roundness
+/*
+// Define shape type
+var control = effect("Smart Shape Control");
+var shapeMenu = control("Shape Type").value;
+if (shapeMenu != 1){
+    value;
+} else {
+    
+    // Get the calculated width and height
     var sizeCalculated = control("Calculated Size").value;
     var boundingBox = control("Bounding Box Size").value;
+    
+    // Get the 'roundness' value (in pixels)
     var roundness = control("Roundness").value;
-    
-    // Get half dimensions
-    var halfWidth = sizeCalculated[0] / 2;
-    var halfHeight = sizeCalculated[1] / 2;
-    
-    // Padding
+        
+    // Get dimensions after padding
     var uniformPadding = control("Uniform Padding").value;
     var paddingWidth = control("Padding Width").value;
     var paddingHeight = uniformPadding ? paddingWidth : control("Padding Height").value;
-    
-    //Limit Padding
+        
+    // Limit Padding
     var boundingBoxSize = control("Bounding Box Size");
-    var paddingWidth = Math.max(paddingWidth,-boundingBoxSize[0]/2);
-    var paddingHeight = Math.max(paddingHeight,-boundingBoxSize[1]/2);
-    
+    paddingWidth = Math.max(paddingWidth, -boundingBoxSize[0]/2);
+    paddingHeight = Math.max(paddingHeight, -boundingBoxSize[1]/2);
+        
+    // Adjusted width and height
+    var width = sizeCalculated[0] - 2 * paddingWidth;
+    var height = sizeCalculated[1] - 2 * paddingHeight;
+    var halfWidth = width / 2;
+    var halfHeight = height / 2;
+        
     // Anchor controls
     var anchorPctX = control("Align X Anchor %").value / 100;
     var anchorPctY = control("Align Y Anchor %").value / 100;
-    
+        
     // Calculate the anchor offset in pixels
-    var anchorOffsetX = anchorPctX * (sizeCalculated[0] - paddingWidth * 2) / 2; 
-    var anchorOffsetY = anchorPctY * (sizeCalculated[1] - paddingHeight * 2) / 2;
-    
-    // Get roundness percentage for each corner (-100 to 100)
-    var roundPct_TL = control("Top Left %").value;
-    var roundPct_TR = control("Top Right %").value;
-    var roundPct_BR = control("Bottom Right %").value;
-    var roundPct_BL = control("Bottom Left %").value;
-    
-    // Calculate maximum possible radius based on half dimensions
-    var maxPossibleRadius = Math.min(halfWidth, halfHeight);
-    
-    // Function to calculate radius and handle length for each corner
-    function calcCornerParams(roundPct, roundness, maxRadius) {
-        // Ensure roundness doesn't exceed the maximum possible radius
-        var effectiveRoundness = Math.min(roundness, maxRadius);
-        // Radius is always positive
-        var r = (Math.abs(roundPct) / 100) * effectiveRoundness;
-        var handleLength = r * 0.55228475;
-        // Sign is determined by the rounding percentage
-        var sign = Math.sign(roundPct);
-        if (sign === 0) sign = 1; // Default to 1 if percentage is zero
-        return { radius: r, handle: handleLength, sign: sign };
-    }
-    
-    // Calculate parameters for each corner
-    var TL = calcCornerParams(roundPct_TL, roundness, maxPossibleRadius);
-    var TR = calcCornerParams(roundPct_TR, roundness, maxPossibleRadius);
-    var BR = calcCornerParams(roundPct_BR, roundness, maxPossibleRadius);
-    var BL = calcCornerParams(roundPct_BL, roundness, maxPossibleRadius);
-    
+    var anchorOffsetX = anchorPctX * width / 2; 
+    var anchorOffsetY = anchorPctY * height / 2;
+        
+    // Get roundness percentage for each corner (0 to 100)
+    var roundPct_TL = Math.max(control("Top Left %").value, 0);
+    var roundPct_TR = Math.max(control("Top Right %").value, 0);
+    var roundPct_BR = Math.max(control("Bottom Right %").value, 0);
+    var roundPct_BL = Math.max(control("Bottom Left %").value, 0);
+        
+    // Initial radii based on 'roundness' and percentages
+    var radius_TL = (roundPct_TL / 100) * roundness;
+    var radius_TR = (roundPct_TR / 100) * roundness;
+    var radius_BR = (roundPct_BR / 100) * roundness;
+    var radius_BL = (roundPct_BL / 100) * roundness;
+        
+    // Ensure radii do not exceed dimensions
+    // Sum of radii along each edge
+    var sumRadii_Top = radius_TL + radius_TR;
+    var sumRadii_Bottom = radius_BL + radius_BR;
+    var sumRadii_Left = radius_TL + radius_BL;
+    var sumRadii_Right = radius_TR + radius_BR;
+        
+    // Scales to prevent corners from overlapping along each edge
+    var scale_Top = sumRadii_Top > width ? width / sumRadii_Top : 1;
+    var scale_Bottom = sumRadii_Bottom > width ? width / sumRadii_Bottom : 1;
+    var scale_Left = sumRadii_Left > height ? height / sumRadii_Left : 1;
+    var scale_Right = sumRadii_Right > height ? height / sumRadii_Right : 1;
+        
+    // Minimum scales affecting each corner
+    var scale_TL = Math.min(scale_Top, scale_Left, 1);
+    var scale_TR = Math.min(scale_Top, scale_Right, 1);
+    var scale_BR = Math.min(scale_Bottom, scale_Right, 1);
+    var scale_BL = Math.min(scale_Bottom, scale_Left, 1);
+        
+    // Adjusted radii after scaling
+    radius_TL *= scale_TL;
+    radius_TR *= scale_TR;
+    radius_BR *= scale_BR;
+    radius_BL *= scale_BL;
+	
+    // Calculate handles for Bezier curves
+	var k = 0.55228475; //Kappa
+    var handle_TL = radius_TL * k;
+    var handle_TR = radius_TR * k;
+    var handle_BR = radius_BR * k;
+    var handle_BL = radius_BL * k;
+        
     // Adjusted corner positions based on anchor offsets
     var c_TL = [-halfWidth - anchorOffsetX, -halfHeight - anchorOffsetY];
     var c_TR = [halfWidth - anchorOffsetX, -halfHeight - anchorOffsetY];
     var c_BR = [halfWidth - anchorOffsetX, halfHeight - anchorOffsetY];
     var c_BL = [-halfWidth - anchorOffsetX, halfHeight - anchorOffsetY];
-    
+        
     // Calculate points where arcs meet edges
-    var p1_TL = [c_TL[0], c_TL[1] + TL.radius];
-    var p2_TL = [c_TL[0] + TL.radius, c_TL[1]];
-    
-    var p3_TR = [c_TR[0] - TR.radius, c_TR[1]];
-    var p4_TR = [c_TR[0], c_TR[1] + TR.radius];
-    
-    var p5_BR = [c_BR[0], c_BR[1] - BR.radius];
-    var p6_BR = [c_BR[0] - BR.radius, c_BR[1]];
-    
-    var p7_BL = [c_BL[0] + BL.radius, c_BL[1]];
-    var p8_BL = [c_BL[0], c_BL[1] - BL.radius];
-    
+    var p1_TL = [c_TL[0], c_TL[1] + radius_TL];
+    var p2_TL = [c_TL[0] + radius_TL, c_TL[1]];
+    var p3_TR = [c_TR[0] - radius_TR, c_TR[1]];
+    var p4_TR = [c_TR[0], c_TR[1] + radius_TR];
+    var p5_BR = [c_BR[0], c_BR[1] - radius_BR];
+    var p6_BR = [c_BR[0] - radius_BR, c_BR[1]];
+    var p7_BL = [c_BL[0] + radius_BL, c_BL[1]];
+    var p8_BL = [c_BL[0], c_BL[1] - radius_BL];
+        
     // Define vertices in order
     var vertices = [
         p1_TL,
@@ -94,43 +112,25 @@ function rectShapePathExpression() {
         p7_BL,
         p8_BL
     ];
-    
-    // Helper function to create tangents
-    function adjustHandle(handleVec, sign) {
-        if (sign >= 0) {
-            // Positive sign: use the handle vector as is
-            return handleVec;
-        } else {
-            // Negative sign: rotate the handle vector by -90 degrees (clockwise)
-            return [handleVec[1], -handleVec[0]];
-        }
-    }
-    
+        
     // For each vertex, define tangents
     var p1_TL_In = [0, 0];
-    var p1_TL_Out = adjustHandle([TL.handle, 0], -TL.sign);
-    
-    var p2_TL_In = adjustHandle([-TL.handle, 0], TL.sign);
+    var p1_TL_Out = [0, -handle_TL];
+    var p2_TL_In = [-handle_TL, 0];
     var p2_TL_Out = [0, 0];
-    
     var p3_TR_In = [0, 0];
-    var p3_TR_Out = adjustHandle([0, TR.handle], -TR.sign);
-    
-    var p4_TR_In = adjustHandle([0, -TR.handle], TR.sign);
+    var p3_TR_Out = [handle_TR, 0];
+    var p4_TR_In = [0, -handle_TR];
     var p4_TR_Out = [0, 0];
-    
     var p5_BR_In = [0, 0];
-    var p5_BR_Out = adjustHandle([-BR.handle, 0], -BR.sign);
-    
-    var p6_BR_In = adjustHandle([BR.handle, 0], BR.sign);
+    var p5_BR_Out = [0, handle_BR];
+    var p6_BR_In = [handle_BR, 0];
     var p6_BR_Out = [0, 0];
-    
     var p7_BL_In = [0, 0];
-    var p7_BL_Out = adjustHandle([0, -BL.handle], -BL.sign);
-    
-    var p8_BL_In = adjustHandle([0, BL.handle], BL.sign);
+    var p7_BL_Out = [-handle_BL, 0];
+    var p8_BL_In = [0, handle_BL];
     var p8_BL_Out = [0, 0];
-    
+        
     // Calculate inTangents and outTangents
     var inTangents = [
         p1_TL_In,
@@ -142,7 +142,7 @@ function rectShapePathExpression() {
         p7_BL_In,
         p8_BL_In
     ];
-    
+        
     var outTangents = [
         p1_TL_Out,
         p2_TL_Out,
@@ -153,15 +153,14 @@ function rectShapePathExpression() {
         p7_BL_Out,
         p8_BL_Out
     ];
-    
-    // Close the path
-    var closed = true;
-    
-    // Create the shape path
-    createPath(vertices, inTangents, outTangents, closed);
-    }
-    */
-    }
+        
+// Create the shape path
+var closed = true;
+createPath(vertices, inTangents, outTangents, closed);
+
+}
+*/
+}
     
     function ellipseShapePathExpression() {
     /*

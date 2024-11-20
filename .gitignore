@@ -12,11 +12,10 @@ build/
 SmartShapesSettings.txt
 
 # Older versions
-versions/
-
-#AE test projects
-AE/
+Versions/
 
 FFX/Old/
 
 Expressions/
+
+# To remove cached folders type "git rm -r --cached ffx/old/"

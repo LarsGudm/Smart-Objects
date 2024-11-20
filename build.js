@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const srcDir = path.join(__dirname, 'src');
-const outputFile = path.join(__dirname, 'SmartObjects_1.1.2.jsx');
+const outputFile = path.join(__dirname, 'SmartObjects_1.2.0.jsx');
 
 // Order matters if there are dependencies
 const files = [
@@ -56,4 +56,9 @@ use Control+C to stop any running code
 git add . //This command adds all the changes in your working directory (the current state of your files) to the staging area.
 git commit -m "Comment" //Commit changes and add comment
 git push origin main
+
+TO DO:
+Remove inversion functionality. It wont be used and it doubles the amount of code
+Right angled Triangle logic is good without inversion
+Te
 */
