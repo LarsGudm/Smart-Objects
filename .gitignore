@@ -19,3 +19,5 @@ FFX/Old/
 Expressions/
 
 # To remove cached folders type "git rm -r --cached ffx/old/"
+# rm -f index.lock
+# find .git -name "*.lock"
