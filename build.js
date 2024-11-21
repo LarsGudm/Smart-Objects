@@ -58,8 +58,10 @@ git commit -m "Comment" //Commit changes and add comment
 git push origin main
 
 TO DO:
+FIKSE GITHUB / HOMEBREW
 Remove inversion functionality. It wont be used and it doubles the amount of code
 Right angled Triangle logic is good without inversion
 Kanskje finne en måte og implementere ffxen i jsx fila. Så den er mye lettere å installere og teste i fremtida
 Også muligens gjør at builden ser på main sitt script panel navn for å lage builden, eller motsatt. Så slipper man å oppdatere to steder
+- Simplifisere rektangel koden ved at hvis roundness, eller alle corner pct == 0 så hopper man over all hjørne kalkulering
 */
