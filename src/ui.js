@@ -72,7 +72,9 @@ var UI = (function() {
         convertBtn.onClick = function() {
             app.beginUndoGroup("Convert to Smart Shape");
             try {
-                ShapeFunctions.convertToSmartShape();
+                ShapeFunctions.convertToSmartShape({
+                    separateDimensions: separateDimsCheckbox.value // Pass separate dimensions value
+                });
             } catch (err) {
                 Logging.logMessage("Error in Convert Smart Shape: " + err.toString(), true);
             } finally {

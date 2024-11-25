@@ -3,7 +3,9 @@ const fs = require('fs');
 const path = require('path');
 
 const srcDir = path.join(__dirname, 'src');
-const outputFile = path.join(__dirname, 'SmartObjects_1.2.2.jsx');
+const outputFile = path.join(__dirname, 'SmartObjects.jsx');
+
+const version = '1.2.4';
 
 // Order matters if there are dependencies
 const files = [
@@ -20,7 +22,7 @@ const files = [
 function buildScript() {
 
     // Concatenate files
-    let output = '';
+    let output = `// Version: ${version}\n`;
     files.forEach((file) => {
         const filePath = path.join(srcDir, file);
         const fileContent = fs.readFileSync(filePath, 'utf8');

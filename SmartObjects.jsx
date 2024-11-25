@@ -1,3 +1,4 @@
+// Version: 1.2.4
 
 // src/utilities.js
 
@@ -172,27 +173,15 @@ var shapeMenu = control("Shape Type").value;
 if (shapeMenu != 1){
     value;
 } else {
-    
     // Get the calculated width and height
     var sizeCalculated = control("Calculated Size").value;
     var boundingBox = control("Bounding Box Size").value;
-    
-    // Get the 'roundness' value (in pixels)
     var roundness = control("Roundness").value;
-        
-    // Get dimensions after padding
-    var uniformPadding = control("Uniform Padding").value;
-    var paddingWidth = control("Padding Width").value;
-    var paddingHeight = uniformPadding ? paddingWidth : control("Padding Height").value;
-        
-    // Limit Padding
     var boundingBoxSize = control("Bounding Box Size");
-    paddingWidth = Math.max(paddingWidth, -boundingBoxSize[0]/2);
-    paddingHeight = Math.max(paddingHeight, -boundingBoxSize[1]/2);
         
     // Adjusted width and height
-    var width = sizeCalculated[0] - 2 * paddingWidth;
-    var height = sizeCalculated[1] - 2 * paddingHeight;
+    var width = sizeCalculated[0];
+    var height = sizeCalculated[1];
     var halfWidth = width / 2;
     var halfHeight = height / 2;
         
@@ -200,9 +189,20 @@ if (shapeMenu != 1){
     var anchorPctX = control("Align X Anchor %").value / 100;
     var anchorPctY = control("Align Y Anchor %").value / 100;
         
+	//Padding
+	var padWidth = control("Padding Width");
+	var padHeight = control("Padding Height");
+	var uniformPadding = control("Uniform Padding").value;
+	if(uniformPadding==1){
+		padHeight=padWidth;
+	};
+
+	var padWidthLim = clamp(padWidth,0,-boundingBox[0]/2);
+	var padHeightLim = clamp(padHeight,0,-boundingBox[1]/2);
+	
     // Calculate the anchor offset in pixels
-    var anchorOffsetX = anchorPctX * width / 2; 
-    var anchorOffsetY = anchorPctY * height / 2;
+    var anchorOffsetX = anchorPctX * (halfWidth - padWidthLim * anchorPctX);
+    var anchorOffsetY = anchorPctY * (halfHeight - padHeightLim * anchorPctY);
         
     // Get roundness percentage for each corner (0 to 100)
     var roundPct_TL = Math.max(control("Top Left %").value, 0);
@@ -320,13 +320,13 @@ if (shapeMenu != 1){
 // Create the shape path
 var closed = true;
 createPath(vertices, inTangents, outTangents, closed);
-
 }
 */
+
 }
     
-    function ellipseShapePathExpression() {
-    /*
+function ellipseShapePathExpression() { 
+/*
     // Define shape type
     var control = effect("Smart Shape Control");
     var shapeMenu = control("Shape Type").value;
@@ -335,26 +335,27 @@ createPath(vertices, inTangents, outTangents, closed);
     }else{
     // Get the calculated width and height
     var sizeCalculated = control("Calculated Size").value;
-    
+	var boundingBoxSize = control("Bounding Box Size").value;
+		
     // Padding
-    var uniformPadding = control("Uniform Padding").value;
-    var paddingWidth = control("Padding Width").value;
-    var paddingHeight = uniformPadding ? paddingWidth : control("Padding Height").value;
-    
-    var boundingBoxSize = control("Bounding Box Size");
-    
-    var paddingWidth = Math.max(paddingWidth,-boundingBoxSize[0]/2);
-    var paddingHeight = Math.max(paddingHeight,-boundingBoxSize[1]/2);
+	var padWidth = control("Padding Width");
+	var padHeight = control("Padding Height");
+	var uniformPadding = control("Uniform Padding").value;
+	if(uniformPadding==1){
+		padHeight=padWidth;
+	};
+	var padWidthLim = clamp(padWidth,0,-boundingBoxSize[0]/2);
+	var padHeightLim = clamp(padHeight,0,-boundingBoxSize[1]/2);
     
     // Calculate adjusted dimensions considering padding
-    var adjustedWidth = sizeCalculated[0] - paddingWidth * 2;
-    var adjustedHeight = sizeCalculated[1] - paddingHeight * 2;
+    var adjustedWidth = sizeCalculated[0];
+    var adjustedHeight = sizeCalculated[1];
     
     // Calculate anchor offsets
     var anchorPctX = control("Align X Anchor %").value / 100;
     var anchorPctY = control("Align Y Anchor %").value / 100;
-    var anchorOffsetX = anchorPctX * adjustedWidth / 2;
-    var anchorOffsetY = anchorPctY * adjustedHeight / 2;
+    var anchorOffsetX = anchorPctX * adjustedWidth / 2 - (padWidthLim*anchorPctX);
+    var anchorOffsetY = anchorPctY * adjustedHeight / 2 - (padHeightLim*anchorPctY);
     
     // Define the center of the ellipse
     var center = [-anchorOffsetX, -anchorOffsetY];
@@ -365,14 +366,14 @@ createPath(vertices, inTangents, outTangents, closed);
     
     // Bezier handle lengths for ellipse approximation
     var c = 0.5522847498;
-    var handleX = (radiusX + paddingWidth) * c;
-    var handleY = (radiusY + paddingHeight) * c;
+    var handleX = (radiusX) * c;
+    var handleY = (radiusY) * c;
     
     // Define the four key points of the ellipse
-    var top = [center[0], center[1] - radiusY - paddingHeight];
-    var right = [center[0] + radiusX + paddingWidth, center[1]];
-    var bottom = [center[0], center[1] + radiusY + paddingHeight];
-    var left = [center[0] - radiusX - paddingWidth, center[1]];
+    var top = [center[0], center[1] - radiusY];
+    var right = [center[0] + radiusX, center[1]];
+    var bottom = [center[0], center[1] + radiusY];
+    var left = [center[0] - radiusX, center[1]];
     
     // Collect the vertices
     var vertices = [top, right, bottom, left];
@@ -396,50 +397,37 @@ createPath(vertices, inTangents, outTangents, closed);
     createPath(vertices, inTangents, outTangents, true);
     }
     */
-    }
+}
     
 function boundingBoxPathExpression() {
 /*
 // Check if the expression should be disabled
 var control = effect("Smart Shape Control");
 var disableExpression = control("Draw Guides").value;
-
 if (!disableExpression) {
     value;
 } else {
     // Get parameters
-    var size = control("Bounding Box Size")
-
+    var boundingBoxSize = control("Bounding Box Size")
+	
     // Get half dimensions
-    var halfWidth = size[0] / 2;
-    var halfHeight = size[1] / 2;
-
-    // Padding
-    var uniformPadding = control("Uniform Padding").value;
-    if (!uniformPadding) {
-        var paddingWidth = control("Padding Width").value;
-        var paddingHeight = control("Padding Height").value;
-    }else{
-        var paddingWidth = control("Padding Width").value;
-        var paddingHeight = control("Padding Width").value;
-    }
-    var paddingWidth = Math.max(0,paddingWidth);
-    var paddingHeight = Math.max(0,paddingHeight);
-
+    var halfWidth = boundingBoxSize[0] / 2;
+    var halfHeight = boundingBoxSize[1] / 2;
+	
     // Anchor controls
     var anchorPctX = control("Align X Anchor %").value / 100;
     var anchorPctY = control("Align Y Anchor %").value / 100;
-
+	
     // Calculate the anchor offset in pixels
-    var anchorOffsetX = anchorPctX * size[0] / 2 - anchorPctX * paddingWidth;
-    var anchorOffsetY = anchorPctY * size[1] / 2 - anchorPctY * paddingHeight;
-
+    var anchorOffsetX = anchorPctX * boundingBoxSize[0] / 2;
+    var anchorOffsetY = anchorPctY * boundingBoxSize[1] / 2;
+	
     // Adjusted corner positions based on anchor offsets
     var c_TL = [-halfWidth - anchorOffsetX, -halfHeight - anchorOffsetY];
     var c_TR = [halfWidth - anchorOffsetX, -halfHeight - anchorOffsetY];
     var c_BR = [halfWidth - anchorOffsetX, halfHeight - anchorOffsetY];
     var c_BL = [-halfWidth - anchorOffsetX, halfHeight - anchorOffsetY];
-
+	
     // Define vertices in order
     var vertices = [
         c_TL,
@@ -447,7 +435,7 @@ if (!disableExpression) {
         c_BR,
         c_BL
     ];
-
+	
     // InTangents and OutTangents remain zero
     var inTangents = [
         [0, 0],
@@ -455,189 +443,165 @@ if (!disableExpression) {
         [0, 0],
         [0, 0]
     ];
-
+	
     var outTangents = [
         [0, 0],
         [0, 0],
         [0, 0],
         [0, 0]
     ];
-
-    // Close the path
-    var closed = true;
-
+	
     // Create the shape path
+    var closed = true;
     createPath(vertices, inTangents, outTangents, closed);
 }
 */
 }
     
-    function innerPathExpression() {
-    /*
+function innerPathExpression() {
+/*
     // Check if the expression should be disabled
     var control = effect("Smart Shape Control");
     var disableExpression = control("Draw Guides").value;
-    
     if (!disableExpression) {
         value;
     } else {
         // Get parameters
-        var size = control("Inner Path Size")
-        var boundingBox = control("Bounding Box Size").value;
-    
+        var shapeMenu = control("Shape Type").value;
+        var innerPathSize = control("Inner Path Size").value;
+        var boundingBoxSize = control("Bounding Box Size").value;
         // Get half dimensions
-        var halfWidth = size[0] / 2;
-        var halfHeight = size[1] / 2;
-    
-        // Padding
-        var uniformPadding = control("Uniform Padding").value;
-        if (!uniformPadding) {
-            var paddingWidth = control("Padding Width").value;
-            var paddingHeight = control("Padding Height").value;
-        }else{
-            var paddingWidth = control("Padding Width").value;
-            var paddingHeight = control("Padding Width").value;
-        }
-        var maxNegativePadding = [boundingBox[0] , boundingBox[1]]
-        var paddingWidth = Math.max(-maxNegativePadding[0]/2,paddingWidth);
-        var paddingHeight = Math.max(-maxNegativePadding[1]/2,paddingHeight);
-        
+        var halfWidth = innerPathSize[0] / 2;
+        var halfHeight = innerPathSize[1] / 2;
         // Anchor controls
         var anchorPctX = control("Align X Anchor %").value / 100;
         var anchorPctY = control("Align Y Anchor %").value / 100;
-        
-        if (paddingWidth<0){
-            var padOffsetX = - anchorPctX * paddingWidth;
-        }else{
-            var padOffsetX = 0
-        }
-        if (paddingHeight<0){
-            var padOffsetY = - anchorPctY * paddingHeight;
-        }else{
-            var padOffsetY = 0
-        }
-    
         // Calculate the anchor offset in pixels
-        var anchorOffsetX = anchorPctX * size[0] / 2 + padOffsetX;
-        var anchorOffsetY = anchorPctY * size[1] / 2 + padOffsetY;
-    
-        // Adjusted corner positions based on anchor offsets
-        var c_TL = [-halfWidth - anchorOffsetX, -halfHeight - anchorOffsetY];
-        var c_TR = [halfWidth - anchorOffsetX, -halfHeight - anchorOffsetY];
-        var c_BR = [halfWidth - anchorOffsetX, halfHeight - anchorOffsetY];
-        var c_BL = [-halfWidth - anchorOffsetX, halfHeight - anchorOffsetY];
-    
-        // Define vertices in order
-        var vertices = [
-            c_TL,
-            c_TR,
-            c_BR,
-            c_BL
-        ];
-    
-        // InTangents and OutTangents remain zero
-        var inTangents = [
-            [0, 0],
-            [0, 0],
-            [0, 0],
-            [0, 0]
-        ];
-    
-        var outTangents = [
-            [0, 0],
-            [0, 0],
-            [0, 0],
-            [0, 0]
-        ];
-    
-        // Close the path
+        var anchorOffsetX = anchorPctX * boundingBoxSize[0] / 2;
+        var anchorOffsetY = anchorPctY * boundingBoxSize[1] / 2;
+        // Adjusted center position based on anchor offsets
+        var centerX = -anchorOffsetX;
+        var centerY = -anchorOffsetY;
+
+        if (shapeMenu == 1) {
+            // Rectangle vertices
+            var c_TL = [centerX - halfWidth, centerY - halfHeight];
+            var c_TR = [centerX + halfWidth, centerY - halfHeight];
+            var c_BR = [centerX + halfWidth, centerY + halfHeight];
+            var c_BL = [centerX - halfWidth, centerY + halfHeight];
+            var vertices = [c_TL, c_TR, c_BR, c_BL];
+            var inTangents = [[0,0],[0,0],[0,0],[0,0]];
+            var outTangents = [[0,0],[0,0],[0,0],[0,0]];
+        } else if (shapeMenu == 2) {
+            // Ellipse approximation using 4 points
+            var c = 0.552284749831; // Control point offset
+            var vertices = [
+                [centerX + halfWidth, centerY],
+                [centerX, centerY + halfHeight],
+                [centerX - halfWidth, centerY],
+                [centerX, centerY - halfHeight]
+            ];
+            var inTangents = [
+                [0, -halfHeight * c],
+                [halfWidth * c, 0],
+                [0, halfHeight * c],
+                [-halfWidth * c, 0]
+            ];
+            var outTangents = [
+                [0, halfHeight * c],
+                [-halfWidth * c, 0],
+                [0, -halfHeight * c],
+                [halfWidth * c, 0]
+            ];
+        }
+
+        // Close the path and create it
         var closed = true;
-    
-        // Create the shape path
         createPath(vertices, inTangents, outTangents, closed);
     }
-    */
-    }
+*/
+}
     
-    function anchorPointPathExpression() {
-    /*
-    var control = effect("Smart Shape Control");
-    var drawGuides = control("Draw Guides").value;
-    
-    if (!drawGuides) {
-        value;
-    } else {
-    // Retrieve parameters
-    var innerPathSize = control("Inner Path Size").value;
-    var boundingBoxSize = control("Bounding Box Size").value;
-    
-    // Calculate minimum padding values
-    var minPaddingWidth = -boundingBoxSize[0] / 2;
-    var minPaddingHeight = -boundingBoxSize[1] / 2;
-    
-    // Determine padding values, ensuring they are not less than the minimum
-    var paddingWidth = Math.max(minPaddingWidth, control("Padding Width").value);
-    var paddingHeight = Math.max(minPaddingHeight, control("Padding Height").value);
-    
-    // Calculate anchor alignment percentages
-    var alignXPercent = control("Align X Anchor %").value / 100;
-    var alignYPercent = control("Align Y Anchor %").value / 100;
-    
-    // Compute the anchor position relative to the center
-    var anchorPosition = [
-        alignXPercent * paddingWidth,
-        alignYPercent * paddingHeight
-    ];
-    
+function anchorPointPathExpression() {
+/*
+var control = effect("Smart Shape Control");
+var drawGuides = control("Draw Guides").value;
+var anchorFixed = control("Fix Anchor Point in Center").value;
+
+if (!drawGuides || anchorFixed) {
+    value;
+} else {
+    // Get parameters
+    var boundingBoxSize = control("Bounding Box Size")
+
+    // Get half dimensions
+    var halfWidth = boundingBoxSize[0] / 2;
+    var halfHeight = boundingBoxSize[1] / 2;
+
+    // Anchor controls
+    var anchorPctX = control("Align X Anchor %").value / 100;
+    var anchorPctY = control("Align Y Anchor %").value / 100;
+
+    // Calculate the anchor offset in pixels
+    var anchorOffsetX = anchorPctX * halfWidth;
+    var anchorOffsetY = anchorPctY * halfHeight;
+
     // Base size off
-    var minBounds = Math.min(boundingBoxSize[0],boundingBoxSize[1]);
-    
+    var minBounds = Math.min(halfWidth,halfHeight);
+
     // Cross parameters
     var radius = Math.max(minBounds/25,5); 
     var armWidth = radius/1.7; // Width of the cross arms
     var armLength = radius * 2; // Length of the cross arms
-    
+
     var halfArmWidth = armWidth / 2;
     var halfArmLength = armLength / 2;
-    
-    var x = anchorPosition[0];
-    var y = anchorPosition[1];
-    
-    //Limit drawing
-    var boundsLeft = -boundingBoxSize[0]/2
-    var boundsRight = boundingBoxSize[0]/2
-    var boundsTop = -boundingBoxSize[1]/2
-    var boundsBottom = boundingBoxSize[1]/2
-    
-    var pseudoAnchorPosX = boundingBoxSize[0]/2*alignXPercent;
-    var pseudoAnchorPosY = boundingBoxSize[1]/2*alignYPercent;
-    
-    var pushXRadiusLeft = Math.max(boundsLeft + radius - pseudoAnchorPosX,0);
-    var pushXWidthLeft = Math.max(boundsLeft + armWidth/2 - pseudoAnchorPosX,0);
-    var pushXRadiusRight = Math.max(pseudoAnchorPosX - boundsRight + radius,0);
-    var pushXWidthRight = Math.max(pseudoAnchorPosX - boundsRight + armWidth/2,0);
-    
-    var pushYRadiusTop = Math.max(boundsTop + radius - pseudoAnchorPosY,0);
-    var pushYWidthTop = Math.max(boundsTop + armWidth/2 - pseudoAnchorPosY,0);
-    var pushYRadiusBottom = Math.max(pseudoAnchorPosY - boundsBottom + radius,0);
-    var pushYWidthBottom = Math.max(pseudoAnchorPosY - boundsBottom + armWidth/2,0);
-    
+
     // Define the cross's vertices
     var vertices = [
-        [x - halfArmWidth + pushXWidthLeft, y - halfArmLength + pushYRadiusTop], // Top-left corner of vertical arm
-        [x + halfArmWidth - pushXWidthRight, y - halfArmLength + pushYRadiusTop], // Top-right corner of vertical arm
-        [x + halfArmWidth - pushXWidthRight, y - halfArmWidth + pushYWidthTop],  // Transition to horizontal arm
-        [x + halfArmLength - pushXRadiusRight, y - halfArmWidth + pushYWidthTop], // Rightmost point of horizontal arm (top side)
-        [x + halfArmLength - pushXRadiusRight, y + halfArmWidth - pushYWidthBottom], // Bottom side of horizontal arm
-        [x + halfArmWidth - pushXWidthRight, y + halfArmWidth - pushYWidthBottom],  // Transition back to vertical arm
-        [x + halfArmWidth - pushXWidthRight, y + halfArmLength - pushYRadiusBottom], // Bottom-right corner of vertical arm
-        [x - halfArmWidth + pushXWidthLeft, y + halfArmLength - pushYRadiusBottom], // Bottom-left corner of vertical arm
-        [x - halfArmWidth + pushXWidthLeft, y + halfArmWidth - pushYWidthBottom],  // Transition to horizontal arm
-        [x - halfArmLength + pushXRadiusLeft, y + halfArmWidth - pushYWidthBottom], // Leftmost point of horizontal arm (bottom side)
-        [x - halfArmLength + pushXRadiusLeft, y - halfArmWidth + pushYWidthTop], // Top side of horizontal arm
-        [x - halfArmWidth + pushXWidthLeft, y - halfArmWidth + pushYWidthTop]   // Close the path
+        [- halfArmWidth, - halfArmLength], // Top-left corner of vertical arm
+        [halfArmWidth, - halfArmLength], // Top-right corner of vertical arm
+        [halfArmWidth, - halfArmWidth],  // Transition to horizontal arm
+        [halfArmLength, - halfArmWidth], // Rightmost point of horizontal arm (top side)
+        [halfArmLength, halfArmWidth], // Bottom side of horizontal arm
+        [halfArmWidth, halfArmWidth],  // Transition back to vertical arm
+        [halfArmWidth, halfArmLength], // Bottom-right corner of vertical arm
+        [- halfArmWidth, halfArmLength], // Bottom-left corner of vertical arm
+        [- halfArmWidth, halfArmWidth],  // Transition to horizontal arm
+        [- halfArmLength, halfArmWidth], // Leftmost point of horizontal arm (bottom side)
+        [- halfArmLength, - halfArmWidth], // Top side of horizontal arm
+        [- halfArmWidth, - halfArmWidth]   // Close the path
     ];
-    
+
+
+	//Padding
+	var uniformPadding = control("Uniform Padding");
+	var padWidth = control("Padding Width");
+	var padHeight = control("Padding Height");
+	
+	if(uniformPadding==1){
+	padHeight=padWidth;
+	};
+
+	var padX = anchorPctX * clamp(padWidth,0,-boundingBoxSize[0]/2);
+	var padY = anchorPctY * clamp(padHeight,0,-boundingBoxSize[1]/2);
+	
+	// Function to limit values within specified ranges
+	function adjustVertices(vertices) {
+	  var adjustVertices = [];
+	  for (var i = 0; i < vertices.length; i++) {
+		var posX = vertices[i][0]+anchorOffsetX+padX;
+		var posY = vertices[i][1]+anchorOffsetY+padY;
+		var limitX = clamp(posX,-halfWidth,halfWidth)-anchorOffsetX;
+		var limitY = clamp(posY,-halfHeight,halfHeight)-anchorOffsetY;
+		adjustVertices.push([limitX, limitY]);
+	  }
+	  return adjustVertices;
+	}
+
+    // Apply the limits
+    vertices = adjustVertices(vertices);
+
     // Since all edges are straight lines, inTangents and outTangents are zeros
     var inTangents = [];
     var outTangents = [];
@@ -645,36 +609,41 @@ if (!disableExpression) {
         inTangents.push([0, 0]);
         outTangents.push([0, 0]);
     }
-    
+
     // Create the cross path
     createPath(vertices, inTangents, outTangents, true);
     }
-    */
-    }    
+*/
+}    
 
-    function sizeCalculatedExpression() {
-    /*
-    // Expression to calculate widthCalculated
+function sizeCalculatedExpression() {
+/*
+    // Expression to calculate sizes
     var control = effect("Smart Shape Control");
+	var targetLayer = control("Get size of Layer");
+	
     var paddingWidth = control("Padding Width").value;
     var paddingHeight = control("Padding Height").value;
     var uniformPadding = control("Uniform Padding").value;
-    
     if (uniformPadding == 1) {
         paddingHeight = paddingWidth;
     }
     
-    var targetLayer = control("Get size of Layer");
-    var uniformScale = control("Uniform Scale").value;
-    var uniformSize = control("Uniform Size").value;
     var widthValue = control('Width').value;
     var heightValue = control('Height').value;
-    var widthPercentage = control('Width %').value;
-    var heightPercentage = control('Height %').value;
-     
+    var uniformSize = control("Uniform Size").value;
+    if (uniformSize == 1) {
+        paddingHeight = paddingWidth;
+    }
+
+    var widthPercentage = control('Width %').value/100;
+    var heightPercentage = control('Height %').value/100;
+    var uniformScale = control("Uniform Scale").value;
+	if (uniformScale == 1) {
+		heightPercentage = widthPercentage;
+    }
+
     // Get size and scale values
-    var sizeValue
-    var scalePercentage = [widthPercentage, heightPercentage];
     if (targetLayer == null || targetLayer.index == thisLayer.index) {
         sizeValue = [widthValue, heightValue];
     } else {
@@ -684,19 +653,9 @@ if (!disableExpression) {
         var layerScale = layer.transform.scale.value/100;
         sizeValue = [layerWidth*layerScale[0], layerHeight*layerScale[1]];
     }
-     
-    // Determine sizes
-    var sizeX = (uniformSize == 1) ? sizeValue[0] : sizeValue[0];
-    var sizeY = (uniformSize == 1) ? sizeValue[0] : sizeValue[1];
-     
-    // Determine scales
-    var scaleX = (uniformScale == 1) ? scalePercentage[0] : scalePercentage[0];
-    var scaleY = (uniformScale == 1) ? scalePercentage[0] : scalePercentage[1];
-     
-    // Apply scales to sizes
-    var sizeXScaled = (sizeX + paddingWidth * 2) * (scaleX / 100);
-    var sizeYScaled = (sizeY + paddingHeight * 2)* (scaleY / 100);
-     
+	var sizeXScaled = (sizeValue[0] + paddingWidth*2)*widthPercentage;
+	var sizeYScaled = (sizeValue[1] + paddingHeight*2)*heightPercentage;
+
     // Limit negative padding
     var maxNegativePadding = sizeXScaled / 2;
     if (paddingWidth < 0) {
@@ -707,62 +666,58 @@ if (!disableExpression) {
         paddingHeight = Math.max(paddingHeight, -maxNegativePadding);
     }
     
-    // Calculate calculated dimension
-    var widthCalculated = sizeXScaled * (scaleX / 100); ;
-    var heightCalculated = sizeYScaled * (scaleY / 100); ;
-    
     // Ensure calculated dimension is not negative
-    widthCalculated = Math.max(0, widthCalculated);
-    heightCalculated = Math.max(0, heightCalculated);
+    widthCalculated = Math.max(0, sizeXScaled);
+    heightCalculated = Math.max(0, sizeYScaled);
     
     [widthCalculated,heightCalculated];
-    */
+*/
     
-    }
+}
     
 function boundBoxSizeExpression() {
 /*
-var control = effect("Smart Shape Control");
-var targetLayer = control('Get size of Layer');
-var uniformSize = control("Uniform Size").value;
-var widthValue = Math.max(control('Width').value,0);
-var heightValue = Math.max(control('Height').value,0);
+    var control = effect("Smart Shape Control");
+    var targetLayer = control('Get size of Layer');
+    var uniformSize = control("Uniform Size").value;
+    var widthValue = Math.max(control('Width').value,0);
+    var heightValue = Math.max(control('Height').value,0);
 
-//Padding
-var paddingWidth = control("Padding Width").value;
-var paddingHeight = control("Padding Height").value;
-var uniformPadding = control("Uniform Padding").value;
-if (!uniformPadding) {
-    padding = [Math.max(0,paddingWidth), Math.max(0,paddingHeight)];
-}else{
-    padding = [Math.max(0,paddingWidth), Math.max(0,paddingWidth)];
-}
+    //Padding
+    var paddingWidth = control("Padding Width").value;
+    var paddingHeight = control("Padding Height").value;
+    var uniformPadding = control("Uniform Padding").value;
+    if (!uniformPadding) {
+        padding = [Math.max(0,paddingWidth), Math.max(0,paddingHeight)];
+    }else{
+        padding = [Math.max(0,paddingWidth), Math.max(0,paddingWidth)];
+    }
 
-// Get size values
-if (targetLayer == null || targetLayer.index == thisLayer.index) {
-    size = [widthValue,(uniformSize == 1) ? widthValue : heightValue];
-} else {
-    var layer = thisComp.layer(targetLayer.index);
-    var layerWidth = layer.sourceRectAtTime(time).width;
-    var layerHeight = layer.sourceRectAtTime(time).height;
-    size = [layerWidth, (uniformSize == 1) ? layerWidth : layerHeight];
-}
-var width = (size[0] + padding[0] * 2);
-var height = (size[1] + padding[1] * 2);
-[width , height];
+    // Get size values
+    if (targetLayer == null || targetLayer.index == thisLayer.index) {
+        size = [widthValue,(uniformSize == 1) ? widthValue : heightValue];
+    } else {
+        var layer = thisComp.layer(targetLayer.index);
+        var layerWidth = layer.sourceRectAtTime(time).width;
+        var layerHeight = layer.sourceRectAtTime(time).height;
+        size = [layerWidth, (uniformSize == 1) ? layerWidth : layerHeight];
+    }
+    var width = (size[0] + padding[0] * 2);
+    var height = (size[1] + padding[1] * 2);
+    [width , height];
 */
 }
 
     
     
-    function innerPathSizeExpression() {
-    /*
+function innerPathSizeExpression() {
+/*
     var control = effect("Smart Shape Control");
     var targetLayer = control('Get size of Layer');
     var uniformSize = control("Uniform Size").value;
     var widthValue = control('Width').value;
     var heightValue = control('Height').value;
-    
+
     //Padding
     var paddingWidth = control("Padding Width").value;
     var paddingHeight = control("Padding Height").value;
@@ -772,7 +727,7 @@ var height = (size[1] + padding[1] * 2);
     }else{
         padding = [Math.min(0,paddingWidth), Math.min(0,paddingWidth)];
     }
-    
+
     // Get size values
     var sizeX, sizeY;
     if (targetLayer == null || targetLayer.index == thisLayer.index) {
@@ -789,38 +744,27 @@ var height = (size[1] + padding[1] * 2);
     var width = Math.max(0,sizeX + padding[0]*2);
     var height = Math.max(0,sizeY + padding[1]*2);
     [width , height];
-    */
-    }
+*/
+}
     
     
     
-    function groupPositionExpression() {
-    /*
-    var control = effect("Smart Shape Control");
-    var anchorFixed = control("Fix Anchor Point in Center").value;
-    
-    if (!anchorFixed) {
-        var targetLayer = control("Get size of Layer");
-        if (targetLayer == null || targetLayer.index == thisLayer.index) {
-            var width = control("Width").value;
-            var height = control("Height").value;
-        } else {
-            var layer = thisComp.layer(targetLayer.index);
-            var width = layer.sourceRectAtTime(time).width;
-            var height = layer.sourceRectAtTime(time).height;
-        }
-    
-        var anchorPctX = control("Align X Anchor %").value / 100;
-        var anchorPctY = control("Align Y Anchor %").value / 100;
-        var xOffset = (width * anchorPctX) / 2;
-        var yOffset = (height * anchorPctY) / 2;
-    
-        [xOffset,yOffset]
-    }else{
-        [0,0]
-    }
-    */
-    }
+function groupPositionExpression() {
+/*
+var control = effect("Smart Shape Control");
+var anchorFixed = control("Fix Anchor Point in Center").value;
+if (anchorFixed) {
+[0,0]
+}else{
+var boundingBox = control("Bounding Box Size");
+var anchorPctX = control("Align X Anchor %").value / 100;
+var anchorPctY = control("Align Y Anchor %").value / 100;
+var x = boundingBox[0]/2 * anchorPctX;
+var y = boundingBox[1]/2 * anchorPctY;
+[x,y]
+}
+*/
+}
     
     return {
     rectShapePathExpression: rectShapePathExpression,
@@ -1398,7 +1342,9 @@ var UI = (function() {
         convertBtn.onClick = function() {
             app.beginUndoGroup("Convert to Smart Shape");
             try {
-                ShapeFunctions.convertToSmartShape();
+                ShapeFunctions.convertToSmartShape({
+                    separateDimensions: separateDimsCheckbox.value // Pass separate dimensions value
+                });
             } catch (err) {
                 Logging.logMessage("Error in Convert Smart Shape: " + err.toString(), true);
             } finally {
@@ -1744,7 +1690,7 @@ var UI = (function() {
     function smartShapesPanel(thisObj) {
         var myPanel = (thisObj instanceof Panel)
             ? thisObj
-            : new Window("palette", "Smart Shapes v1.2.2", undefined);
+            : new Window("palette", "Smart Shapes v.1.2.4", undefined);
 
         // Use UI module functions
         UI.createShapeButtonGroup(myPanel);
