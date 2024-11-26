@@ -1,7 +1,7 @@
 // src/shapeExpressions.js
 var ShapeExpressions = (function() {
 
-function rectShapePathExpression() {
+function rectShapePathExpression() { //Test
 /*
 // Define shape type
 var control = effect("Smart Shape Control");
@@ -25,17 +25,17 @@ if (shapeMenu != 1){
     var anchorPctX = control("Align X Anchor %").value / 100;
     var anchorPctY = control("Align Y Anchor %").value / 100;
         
-	//Padding
-	var padWidth = control("Padding Width");
-	var padHeight = control("Padding Height");
-	var uniformPadding = control("Uniform Padding").value;
-	if(uniformPadding==1){
-		padHeight=padWidth;
-	};
+    // Padding
+    var padWidth = control("Padding Width");
+    var padHeight = control("Padding Height");
+    var uniformPadding = control("Uniform Padding").value;
+    if(uniformPadding==1){
+        padHeight=padWidth;
+    };
 
-	var padWidthLim = clamp(padWidth,0,-boundingBox[0]/2);
-	var padHeightLim = clamp(padHeight,0,-boundingBox[1]/2);
-	
+    var padWidthLim = clamp(padWidth,0,-boundingBox[0]/2);
+    var padHeightLim = clamp(padHeight,0,-boundingBox[1]/2);
+    
     // Calculate the anchor offset in pixels
     var anchorOffsetX = anchorPctX * (halfWidth - padWidthLim * anchorPctX);
     var anchorOffsetY = anchorPctY * (halfHeight - padHeightLim * anchorPctY);
@@ -45,117 +45,150 @@ if (shapeMenu != 1){
     var roundPct_TR = Math.max(control("Top Right %").value, 0);
     var roundPct_BR = Math.max(control("Bottom Right %").value, 0);
     var roundPct_BL = Math.max(control("Bottom Left %").value, 0);
+
+	// Adjusted corner positions based on anchor offsets
+	var c_TL = [-halfWidth - anchorOffsetX, -halfHeight - anchorOffsetY];
+	var c_TR = [halfWidth - anchorOffsetX, -halfHeight - anchorOffsetY];
+	var c_BR = [halfWidth - anchorOffsetX, halfHeight - anchorOffsetY];
+	var c_BL = [-halfWidth - anchorOffsetX, halfHeight - anchorOffsetY];
+
+    // Conditional check to skip rounding calculations if necessary
+    if (roundness == 0 || (roundPct_TL == 0 && roundPct_TR == 0 && roundPct_BR == 0 && roundPct_BL == 0)) {
+        // Create rectangle without rounded corners
+        // Define vertices in order
+        var vertices = [
+            c_TL,
+            c_TR,
+            c_BR,
+            c_BL
+        ];
+
+        // Set inTangents and outTangents to zero
+        var inTangents = [
+            [0,0],
+            [0,0],
+            [0,0],
+            [0,0]
+        ];
+
+        var outTangents = [
+            [0,0],
+            [0,0],
+            [0,0],
+            [0,0]
+        ];
+
+        // Create the shape path
+        var closed = true;
+        createPath(vertices, inTangents, outTangents, closed);
+
+    } else {
+        // Create rectangle with rounded corners
+        // Initial radii based on 'roundness' and percentages
+        var radius_TL = (roundPct_TL / 100) * roundness;
+        var radius_TR = (roundPct_TR / 100) * roundness;
+        var radius_BR = (roundPct_BR / 100) * roundness;
+        var radius_BL = (roundPct_BL / 100) * roundness;
+            
+        // Ensure radii do not exceed dimensions
+        // Sum of radii along each edge
+        var sumRadii_Top = radius_TL + radius_TR;
+        var sumRadii_Bottom = radius_BL + radius_BR;
+        var sumRadii_Left = radius_TL + radius_BL;
+        var sumRadii_Right = radius_TR + radius_BR;
+            
+        // Scales to prevent corners from overlapping along each edge
+        var scale_Top = sumRadii_Top > width ? width / sumRadii_Top : 1;
+        var scale_Bottom = sumRadii_Bottom > width ? width / sumRadii_Bottom : 1;
+        var scale_Left = sumRadii_Left > height ? height / sumRadii_Left : 1;
+        var scale_Right = sumRadii_Right > height ? height / sumRadii_Right : 1;
+            
+        // Minimum scales affecting each corner
+        var scale_TL = Math.min(scale_Top, scale_Left, 1);
+        var scale_TR = Math.min(scale_Top, scale_Right, 1);
+        var scale_BR = Math.min(scale_Bottom, scale_Right, 1);
+        var scale_BL = Math.min(scale_Bottom, scale_Left, 1);
+            
+        // Adjusted radii after scaling
+        radius_TL *= scale_TL;
+        radius_TR *= scale_TR;
+        radius_BR *= scale_BR;
+        radius_BL *= scale_BL;
         
-    // Initial radii based on 'roundness' and percentages
-    var radius_TL = (roundPct_TL / 100) * roundness;
-    var radius_TR = (roundPct_TR / 100) * roundness;
-    var radius_BR = (roundPct_BR / 100) * roundness;
-    var radius_BL = (roundPct_BL / 100) * roundness;
-        
-    // Ensure radii do not exceed dimensions
-    // Sum of radii along each edge
-    var sumRadii_Top = radius_TL + radius_TR;
-    var sumRadii_Bottom = radius_BL + radius_BR;
-    var sumRadii_Left = radius_TL + radius_BL;
-    var sumRadii_Right = radius_TR + radius_BR;
-        
-    // Scales to prevent corners from overlapping along each edge
-    var scale_Top = sumRadii_Top > width ? width / sumRadii_Top : 1;
-    var scale_Bottom = sumRadii_Bottom > width ? width / sumRadii_Bottom : 1;
-    var scale_Left = sumRadii_Left > height ? height / sumRadii_Left : 1;
-    var scale_Right = sumRadii_Right > height ? height / sumRadii_Right : 1;
-        
-    // Minimum scales affecting each corner
-    var scale_TL = Math.min(scale_Top, scale_Left, 1);
-    var scale_TR = Math.min(scale_Top, scale_Right, 1);
-    var scale_BR = Math.min(scale_Bottom, scale_Right, 1);
-    var scale_BL = Math.min(scale_Bottom, scale_Left, 1);
-        
-    // Adjusted radii after scaling
-    radius_TL *= scale_TL;
-    radius_TR *= scale_TR;
-    radius_BR *= scale_BR;
-    radius_BL *= scale_BL;
-	
-    // Calculate handles for Bezier curves
-	var k = 0.55228475; //Kappa
-    var handle_TL = radius_TL * k;
-    var handle_TR = radius_TR * k;
-    var handle_BR = radius_BR * k;
-    var handle_BL = radius_BL * k;
-        
-    // Adjusted corner positions based on anchor offsets
-    var c_TL = [-halfWidth - anchorOffsetX, -halfHeight - anchorOffsetY];
-    var c_TR = [halfWidth - anchorOffsetX, -halfHeight - anchorOffsetY];
-    var c_BR = [halfWidth - anchorOffsetX, halfHeight - anchorOffsetY];
-    var c_BL = [-halfWidth - anchorOffsetX, halfHeight - anchorOffsetY];
-        
-    // Calculate points where arcs meet edges
-    var p1_TL = [c_TL[0], c_TL[1] + radius_TL];
-    var p2_TL = [c_TL[0] + radius_TL, c_TL[1]];
-    var p3_TR = [c_TR[0] - radius_TR, c_TR[1]];
-    var p4_TR = [c_TR[0], c_TR[1] + radius_TR];
-    var p5_BR = [c_BR[0], c_BR[1] - radius_BR];
-    var p6_BR = [c_BR[0] - radius_BR, c_BR[1]];
-    var p7_BL = [c_BL[0] + radius_BL, c_BL[1]];
-    var p8_BL = [c_BL[0], c_BL[1] - radius_BL];
-        
-    // Define vertices in order
-    var vertices = [
-        p1_TL,
-        p2_TL,
-        p3_TR,
-        p4_TR,
-        p5_BR,
-        p6_BR,
-        p7_BL,
-        p8_BL
-    ];
-        
-    // For each vertex, define tangents
-    var p1_TL_In = [0, 0];
-    var p1_TL_Out = [0, -handle_TL];
-    var p2_TL_In = [-handle_TL, 0];
-    var p2_TL_Out = [0, 0];
-    var p3_TR_In = [0, 0];
-    var p3_TR_Out = [handle_TR, 0];
-    var p4_TR_In = [0, -handle_TR];
-    var p4_TR_Out = [0, 0];
-    var p5_BR_In = [0, 0];
-    var p5_BR_Out = [0, handle_BR];
-    var p6_BR_In = [handle_BR, 0];
-    var p6_BR_Out = [0, 0];
-    var p7_BL_In = [0, 0];
-    var p7_BL_Out = [-handle_BL, 0];
-    var p8_BL_In = [0, handle_BL];
-    var p8_BL_Out = [0, 0];
-        
-    // Calculate inTangents and outTangents
-    var inTangents = [
-        p1_TL_In,
-        p2_TL_In,
-        p3_TR_In,
-        p4_TR_In,
-        p5_BR_In,
-        p6_BR_In,
-        p7_BL_In,
-        p8_BL_In
-    ];
-        
-    var outTangents = [
-        p1_TL_Out,
-        p2_TL_Out,
-        p3_TR_Out,
-        p4_TR_Out,
-        p5_BR_Out,
-        p6_BR_Out,
-        p7_BL_Out,
-        p8_BL_Out
-    ];
-        
-// Create the shape path
-var closed = true;
-createPath(vertices, inTangents, outTangents, closed);
+        // Calculate handles for Bezier curves
+        var k = 0.55228475; // Kappa
+        var handle_TL = radius_TL * k;
+        var handle_TR = radius_TR * k;
+        var handle_BR = radius_BR * k;
+        var handle_BL = radius_BL * k;
+            
+        // Calculate points where arcs meet edges
+        var p1_TL = [c_TL[0], c_TL[1] + radius_TL];
+        var p2_TL = [c_TL[0] + radius_TL, c_TL[1]];
+        var p3_TR = [c_TR[0] - radius_TR, c_TR[1]];
+        var p4_TR = [c_TR[0], c_TR[1] + radius_TR];
+        var p5_BR = [c_BR[0], c_BR[1] - radius_BR];
+        var p6_BR = [c_BR[0] - radius_BR, c_BR[1]];
+        var p7_BL = [c_BL[0] + radius_BL, c_BL[1]];
+        var p8_BL = [c_BL[0], c_BL[1] - radius_BL];
+            
+        // Define vertices in order
+        var vertices = [
+            p1_TL,
+            p2_TL,
+            p3_TR,
+            p4_TR,
+            p5_BR,
+            p6_BR,
+            p7_BL,
+            p8_BL
+        ];
+            
+        // For each vertex, define tangents
+        var p1_TL_In = [0, 0];
+        var p1_TL_Out = [0, -handle_TL];
+        var p2_TL_In = [-handle_TL, 0];
+        var p2_TL_Out = [0, 0];
+        var p3_TR_In = [0, 0];
+        var p3_TR_Out = [handle_TR, 0];
+        var p4_TR_In = [0, -handle_TR];
+        var p4_TR_Out = [0, 0];
+        var p5_BR_In = [0, 0];
+        var p5_BR_Out = [0, handle_BR];
+        var p6_BR_In = [handle_BR, 0];
+        var p6_BR_Out = [0, 0];
+        var p7_BL_In = [0, 0];
+        var p7_BL_Out = [-handle_BL, 0];
+        var p8_BL_In = [0, handle_BL];
+        var p8_BL_Out = [0, 0];
+            
+        // Calculate inTangents and outTangents
+        var inTangents = [
+            p1_TL_In,
+            p2_TL_In,
+            p3_TR_In,
+            p4_TR_In,
+            p5_BR_In,
+            p6_BR_In,
+            p7_BL_In,
+            p8_BL_In
+        ];
+            
+        var outTangents = [
+            p1_TL_Out,
+            p2_TL_Out,
+            p3_TR_Out,
+            p4_TR_Out,
+            p5_BR_Out,
+            p6_BR_Out,
+            p7_BL_Out,
+            p8_BL_Out
+        ];
+            
+        // Create the shape path
+        var closed = true;
+        createPath(vertices, inTangents, outTangents, closed);
+    }
 }
 */
 

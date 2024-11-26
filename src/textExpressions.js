@@ -21,21 +21,19 @@ newStyle.setText(txt)
 function anchorPointExpression() {
 /*
 var control =  effect("Smart Text Control")
-var boundingBoxSize = control("Bounding Box Size").value;
-var anchorPctX = control("Align X Anchor %")/100;
-var anchorPctY = control("Align Y Anchor %")/100;
 var boundBoxAnchor = control("Bounding Box Anchor").value;
-var leftTopValues = control("Left & Top Values").value;
-
 if (boundBoxAnchor==0){
 	value;
 }else{
+	var boundingBoxSize = control("Bounding Box Size").value;
+	var anchorPctX = control("Align X Anchor %")/100;
+	var anchorPctY = control("Align Y Anchor %")/100;
+	var leftTopValues = control("Left & Top Values").value;
+	
 	var halfWidth = boundingBoxSize[0] / 2;
 	var halfHeight = boundingBoxSize[1] / 2;
-	var centerX = halfWidth + leftTopValues[0];
-	var centerY = halfHeight + leftTopValues[1];
-	var x = centerX + halfWidth * anchorPctX;
-	var y = centerY + halfHeight * anchorPctY;
+	var x = halfWidth * anchorPctX + leftTopValues[0] + halfWidth;
+	var y = halfHeight * anchorPctY + leftTopValues[1] + halfHeight;
 	[x,y]
 }
 */

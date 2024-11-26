@@ -5,7 +5,7 @@ const path = require('path');
 const srcDir = path.join(__dirname, 'src');
 const outputFile = path.join(__dirname, 'SmartObjects.jsx');
 
-const version = '1.2.4';
+const version = '1.2.5';
 
 // Order matters if there are dependencies
 const files = [
