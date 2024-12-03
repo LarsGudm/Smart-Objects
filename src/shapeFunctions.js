@@ -145,7 +145,7 @@ var ShapeFunctions = (function() {
     }
     
     // Function to Convert Selected Shapes to Smart Shapes
-    function convertToSmartShape() {
+    function convertToSmartShape(config) {
         var comp = app.project.activeItem;
         if (!comp || !(comp instanceof CompItem)) {
             Logging.logMessage("Please select a composition.");
@@ -185,7 +185,8 @@ var ShapeFunctions = (function() {
             var properties = {
                 name: layer.name,
                 fillColor: fillColor,
-                targetLayer: layer
+                targetLayer: layer,
+                separateDimensions: config.separateDimensions
             };
     
             createSmartShape(properties);
@@ -229,36 +230,18 @@ var ShapeFunctions = (function() {
             shapeLayer.selected = true;
         }
     
-        // Apply the .ffx preset
-        // Note: If you want to avoid using external files, you need to recreate the effect controls programmatically
-        var existingEffect = shapeLayer.effect("Smart Shape Control");
-        if (existingEffect) {
-            Logging.logMessage("'Smart Shape Control' effect already exists on " + shapeLayer.name + ". Removing it.");
-            existingEffect.remove();
-        }
-    
-        // Apply the .ffx preset (requires the .ffx file)
-        var scriptFolder = new File($.fileName).parent;
-        var ffxFile = new File(scriptFolder.fsName + "/FFX/SmartShapeControl.ffx");
-    
-        if (ffxFile.exists) {
-            Logging.logMessage("Applying preset: " + ffxFile.fsName);
-            shapeLayer.applyPreset(ffxFile);
-            Logging.logMessage("Preset applied successfully to " + shapeLayer.name);
-        } else {
-            Logging.logMessage("Preset file not found: " + ffxFile.fsName);
-            return null;
-        }
-    
-        // Verify if the effect exists
-        var smartShapeControl = shapeLayer.effect('Smart Shape Control');
+        // Apply the preset and move the effect to the top using the utility function
+        var smartShapeControl = Utilities.applyPresetAndMoveEffectToTop(
+            shapeLayer,
+            "Smart Shape Control",
+            "SmartShapeControl.ffx"
+        );
+
         if (!smartShapeControl) {
-            Logging.logMessage("Error: 'Smart Shape Control' effect not found on the shape layer.",true);
+            // Error message is already logged in the utility function
             return null;
-        } else {
-            Logging.logMessage("'Smart Shape Control' effect found on " + shapeLayer.name);
         }
-    
+
         // Extract the Expressions
         try {
             var rectShapeExprString = Utilities.extractExpression(ShapeExpressions.rectShapePathExpression);

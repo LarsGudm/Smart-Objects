@@ -52,16 +52,15 @@ var TextFunctions = (function() {
     }
 
     function addSmartProperties(textLayer) {
-        // Path to the FFX file
-        var scriptFolder = new File($.fileName).parent;
-        var ffxFile = new File(scriptFolder.fsName + "/FFX/SmartTextControl.ffx");
+        // Apply the preset and move the effect to the top using the utility function
+        var smartTextControl = Utilities.applyPresetAndMoveEffectToTop(
+            textLayer,
+            "Smart Text Control",
+            "SmartTextControl.ffx"
+        );
 
-        if (ffxFile.exists) {
-            Logging.logMessage("Applying preset: " + ffxFile.fsName, false);
-            textLayer.applyPreset(ffxFile);
-            Logging.logMessage("Preset applied successfully to " + textLayer.name, false);
-        } else {
-            Logging.logMessage("Preset file not found: " + ffxFile.fsName, true);
+        if (!smartTextControl) {
+            // Error message is already logged in the utility function
             return null;
         }
 
@@ -76,10 +75,19 @@ var TextFunctions = (function() {
             return null;
         }
         var smartTextControl = textLayer.effect('Smart Text Control');
-        // Apply Expressions to properties
+
         try {
-            // Apply Expressions to expression controls
-            textLayer.property("ADBE Text Properties").property("ADBE Text Document").expression = sourceTextExprString;
+            // Check if the Source Text property already has an expression
+            var sourceTextProperty = textLayer.property("ADBE Text Properties").property("ADBE Text Document");
+            if (sourceTextProperty.expressionEnabled) {
+                // Skip adding the expression and log the layer name
+                Logging.logMessage("Expression already exists on Source Text for layer: " + textLayer.name + ", skipping sourceTextExpression", false);
+                alert("Expression already exists on Source Text for layer: " + textLayer.name + ", skipping sourceTextExpression");
+            } else {
+                // Apply the expression to the Source Text property
+                sourceTextProperty.expression = sourceTextExprString;
+            }
+
             textLayer.property("Transform").property("Anchor Point").expression = anchorPointExprString;
             smartTextControl.property("Bounding Box Size").expression = boundBoxSizeExprString;
             smartTextControl.property("Left & Top Values").expression = leftTopValuesExprString;

@@ -4,7 +4,7 @@
     function smartShapesPanel(thisObj) {
         var myPanel = (thisObj instanceof Panel)
             ? thisObj
-            : new Window("palette", "Smart Shapes v.1.2.5", undefined);
+            : new Window("palette", "Smart Shapes v.1.2.6", undefined);
 
         // Use UI module functions
         UI.createShapeButtonGroup(myPanel);

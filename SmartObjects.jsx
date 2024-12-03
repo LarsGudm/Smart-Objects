@@ -5,8 +5,9 @@
 // Utilities Module
 // Helper functions used across the script
 
-var Utilities = {
-    getLayerDimensionsAndCenter: function(layer, comp) {
+var Utilities =(function() {
+
+    function getLayerDimensionsAndCenter(layer, comp) {
         var time = comp.time;
 
         if (layer instanceof CameraLayer) {
@@ -41,9 +42,9 @@ var Utilities = {
             height: heightScaled,
             center: center
         };
-    },
+    }
 
-    extractExpression: function(func) {
+    function extractExpression(func) {
         if (typeof func !== 'function') {
             throw new Error("Utilities.extractExpression expected a function, but got " + typeof func);
         }
@@ -65,9 +66,9 @@ var Utilities = {
         } else {
             return '';
         }
-    },    
+    }  
 
-    findFirstFillColor: function(group) {
+    function findFirstFillColor(group) {
         var fillColor = null;
         function recursiveSearch(group) {
             for (var i = 1; i <= group.numProperties; i++) {
@@ -86,21 +87,115 @@ var Utilities = {
         }
         recursiveSearch(group);
         return fillColor;
-    },
+    }
 
     // Color Helper Functions
-    isArray: function(value) {
+    function isArray(value) {
         return Object.prototype.toString.call(value) === '[object Array]';
-    },
+    }
 
-    normalizeColors: function(colors) {
+    function normalizeColors(colors) {
         var normalized = [];
         for (var i = 0; i < colors.length; i++) {
             normalized.push(colors[i] / 255);
         }
         return normalized;
     }
-};
+
+    // Add the new utility function here
+    function applyPresetAndMoveEffectToTop(layer, effectName, presetFileName) {
+        var comp = app.project.activeItem;
+
+        // Store the original selection
+        var originalSelection = [];
+        for (var i = 1; i <= comp.numLayers; i++) {
+            if (comp.layer(i).selected) {
+                originalSelection.push(comp.layer(i));
+            }
+        }
+
+        // Deselect all layers
+        for (var i = 1; i <= comp.numLayers; i++) {
+            comp.layer(i).selected = false;
+        }
+
+        // Select only the target layer
+        layer.selected = true;
+
+        // Remove existing effect if it exists
+        var existingEffect = layer.effect(effectName);
+        if (existingEffect) {
+            Logging.logMessage("'" + effectName + "' effect already exists on " + layer.name + ". Removing it.");
+            existingEffect.remove();
+        }
+
+        // Apply the .ffx preset
+        var scriptFolder = new File($.fileName).parent;
+        var ffxFile = new File(scriptFolder.fsName + "/FFX/" + presetFileName);
+
+        if (ffxFile.exists) {
+            Logging.logMessage("Applying preset: " + ffxFile.fsName);
+            layer.applyPreset(ffxFile);
+            Logging.logMessage("Preset applied successfully to " + layer.name);
+        } else {
+            Logging.logMessage("Preset file not found: " + ffxFile.fsName, true);
+
+            // Restore the original selection
+            for (var i = 1; i <= comp.numLayers; i++) {
+                comp.layer(i).selected = false;
+            }
+            for (var i = 0; i < originalSelection.length; i++) {
+                originalSelection[i].selected = true;
+            }
+
+            return null;
+        }
+
+        // Restore the original selection
+        for (var i = 1; i <= comp.numLayers; i++) {
+            comp.layer(i).selected = false;
+        }
+        for (var i = 0; i < originalSelection.length; i++) {
+            originalSelection[i].selected = true;
+        }
+
+        // Verify if the effect exists and get it as a Property
+        var effectsGroup = layer.property("ADBE Effect Parade");
+        var appliedEffect = null;
+        for (var i = 1; i <= effectsGroup.numProperties; i++) {
+            var effect = effectsGroup.property(i);
+            if (effect.name === effectName) {
+                appliedEffect = effect;
+                break;
+            }
+        }
+
+        if (!appliedEffect) {
+            Logging.logMessage("Error: '" + effectName + "' effect not found on the layer.", true);
+            return null;
+        } else {
+            Logging.logMessage("'" + effectName + "' effect found on " + layer.name);
+        }
+
+        // Move the effect to the top of the effect stack
+        if (appliedEffect.propertyIndex > 1) {
+            appliedEffect.moveTo(1);
+        }
+
+        return appliedEffect;
+    }
+
+    // Return the public API
+    return {
+        getLayerDimensionsAndCenter: getLayerDimensionsAndCenter,
+        extractExpression: extractExpression,
+        findFirstFillColor: findFirstFillColor,
+        isArray: isArray,
+        normalizeColors: normalizeColors,
+        applyPresetAndMoveEffectToTop: applyPresetAndMoveEffectToTop
+    };
+
+})();
 
 // src/logging.js
 var Logging = (function() {
@@ -959,7 +1054,7 @@ var ShapeFunctions = (function() {
     }
     
     // Function to Convert Selected Shapes to Smart Shapes
-    function convertToSmartShape() {
+    function convertToSmartShape(config) {
         var comp = app.project.activeItem;
         if (!comp || !(comp instanceof CompItem)) {
             Logging.logMessage("Please select a composition.");
@@ -999,7 +1094,8 @@ var ShapeFunctions = (function() {
             var properties = {
                 name: layer.name,
                 fillColor: fillColor,
-                targetLayer: layer
+                targetLayer: layer,
+                separateDimensions: config.separateDimensions
             };
     
             createSmartShape(properties);
@@ -1043,36 +1139,18 @@ var ShapeFunctions = (function() {
             shapeLayer.selected = true;
         }
     
-        // Apply the .ffx preset
-        // Note: If you want to avoid using external files, you need to recreate the effect controls programmatically
-        var existingEffect = shapeLayer.effect("Smart Shape Control");
-        if (existingEffect) {
-            Logging.logMessage("'Smart Shape Control' effect already exists on " + shapeLayer.name + ". Removing it.");
-            existingEffect.remove();
-        }
-    
-        // Apply the .ffx preset (requires the .ffx file)
-        var scriptFolder = new File($.fileName).parent;
-        var ffxFile = new File(scriptFolder.fsName + "/FFX/SmartShapeControl.ffx");
-    
-        if (ffxFile.exists) {
-            Logging.logMessage("Applying preset: " + ffxFile.fsName);
-            shapeLayer.applyPreset(ffxFile);
-            Logging.logMessage("Preset applied successfully to " + shapeLayer.name);
-        } else {
-            Logging.logMessage("Preset file not found: " + ffxFile.fsName);
-            return null;
-        }
-    
-        // Verify if the effect exists
-        var smartShapeControl = shapeLayer.effect('Smart Shape Control');
+        // Apply the preset and move the effect to the top using the utility function
+        var smartShapeControl = Utilities.applyPresetAndMoveEffectToTop(
+            shapeLayer,
+            "Smart Shape Control",
+            "SmartShapeControl.ffx"
+        );
+
         if (!smartShapeControl) {
-            Logging.logMessage("Error: 'Smart Shape Control' effect not found on the shape layer.",true);
+            // Error message is already logged in the utility function
             return null;
-        } else {
-            Logging.logMessage("'Smart Shape Control' effect found on " + shapeLayer.name);
         }
-    
+
         // Extract the Expressions
         try {
             var rectShapeExprString = Utilities.extractExpression(ShapeExpressions.rectShapePathExpression);
@@ -1255,16 +1333,15 @@ var TextFunctions = (function() {
     }
 
     function addSmartProperties(textLayer) {
-        // Path to the FFX file
-        var scriptFolder = new File($.fileName).parent;
-        var ffxFile = new File(scriptFolder.fsName + "/FFX/SmartTextControl.ffx");
+        // Apply the preset and move the effect to the top using the utility function
+        var smartTextControl = Utilities.applyPresetAndMoveEffectToTop(
+            textLayer,
+            "Smart Text Control",
+            "SmartTextControl.ffx"
+        );
 
-        if (ffxFile.exists) {
-            Logging.logMessage("Applying preset: " + ffxFile.fsName, false);
-            textLayer.applyPreset(ffxFile);
-            Logging.logMessage("Preset applied successfully to " + textLayer.name, false);
-        } else {
-            Logging.logMessage("Preset file not found: " + ffxFile.fsName, true);
+        if (!smartTextControl) {
+            // Error message is already logged in the utility function
             return null;
         }
 
@@ -1279,10 +1356,19 @@ var TextFunctions = (function() {
             return null;
         }
         var smartTextControl = textLayer.effect('Smart Text Control');
-        // Apply Expressions to properties
+
         try {
-            // Apply Expressions to expression controls
-            textLayer.property("ADBE Text Properties").property("ADBE Text Document").expression = sourceTextExprString;
+            // Check if the Source Text property already has an expression
+            var sourceTextProperty = textLayer.property("ADBE Text Properties").property("ADBE Text Document");
+            if (sourceTextProperty.expressionEnabled) {
+                // Skip adding the expression and log the layer name
+                Logging.logMessage("Expression already exists on Source Text for layer: " + textLayer.name + ", skipping sourceTextExpression", false);
+                alert("Expression already exists on Source Text for layer: " + textLayer.name + ", skipping sourceTextExpression");
+            } else {
+                // Apply the expression to the Source Text property
+                sourceTextProperty.expression = sourceTextExprString;
+            }
+
             textLayer.property("Transform").property("Anchor Point").expression = anchorPointExprString;
             smartTextControl.property("Bounding Box Size").expression = boundBoxSizeExprString;
             smartTextControl.property("Left & Top Values").expression = leftTopValuesExprString;
@@ -1721,7 +1807,7 @@ var UI = (function() {
     function smartShapesPanel(thisObj) {
         var myPanel = (thisObj instanceof Panel)
             ? thisObj
-            : new Window("palette", "Smart Shapes v.1.2.5", undefined);
+            : new Window("palette", "Smart Shapes v.1.2.6", undefined);
 
         // Use UI module functions
         UI.createShapeButtonGroup(myPanel);
