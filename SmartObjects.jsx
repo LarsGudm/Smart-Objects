@@ -1,4 +1,4 @@
-// Version: 1.2.5
+// Version: 1.2.6
 
 // src/utilities.js
 
@@ -1288,7 +1288,7 @@ var TextFunctions = (function() {
             return;
         }
 
-        // Merge properties with defaults (if any)
+        // Merge properties with defaults (if any))
         var config = properties || {};
 
         // Create a new text layer with default settings

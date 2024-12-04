@@ -7,7 +7,7 @@ var TextFunctions = (function() {
             return;
         }
 
-        // Merge properties with defaults (if any)
+        // Merge properties with defaults (if any))
         var config = properties || {};
 
         // Create a new text layer with default settings
