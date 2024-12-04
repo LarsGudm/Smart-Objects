@@ -1,15 +1,20 @@
 {
   "name": "smart-objects",
   "version": "1.0.0",
-  "description": "Smart Shapes After Effects Script",
+  "description": "Smart Objects After Effects Script",
   "main": "build.js",
   "scripts": {
+    "prepare": "husky install",
     "build": "node build.js",
-    "watch": "node build.js --watch"
+    "watch": "node build.js --watch",
+    "stop-watch": "node stopWatcher.js"
   },
+  "author": "Your Name",
+  "license": "MIT",
   "dependencies": {
     "chokidar": "^3.5.3"
   },
-  "author": "Lars Lundefaret",
-  "license": "MIT"
+  "devDependencies": {
+    "husky": "^9.1.7"
+  }
 }

@@ -13,7 +13,9 @@ Versions/
 
 FFX/Old/
 
-Expressions/
+node_modules/
+
+watcher.pid
 
 # To remove cached folders type "git rm -r --cached ffx/old/"
 # rm -f index.lock

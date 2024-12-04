@@ -1,69 +1,62 @@
 // build.js
 const fs = require('fs');
 const path = require('path');
+const chokidar = require('chokidar');
 
 const srcDir = path.join(__dirname, 'src');
 const outputFile = path.join(__dirname, 'SmartObjects.jsx');
+const pidFile = path.join(__dirname, 'watcher.pid'); // PID file path
 
 const version = '1.2.6';
 
 // Order matters if there are dependencies
 const files = [
-    'utilities.js',
-    'logging.js',
-    'shapeExpressions.js',
-    'shapeFunctions.js',
-    'textExpressions.js',
-    'textFunctions.js',
-    'ui.js',
-    'main.js',
+  'utilities.js',
+  'logging.js',
+  'shapeExpressions.js',
+  'shapeFunctions.js',
+  'textExpressions.js',
+  'textFunctions.js',
+  'ui.js',
+  'main.js',
 ];
 
 function buildScript() {
+  // Concatenate files
+  let output = `// Version: ${version}\n`;
+  files.forEach((file) => {
+    const filePath = path.join(srcDir, file);
+    const fileContent = fs.readFileSync(filePath, 'utf8');
+    output += '\n' + fileContent;
+  });
 
-    // Concatenate files
-    let output = `// Version: ${version}\n`;
-    files.forEach((file) => {
-        const filePath = path.join(srcDir, file);
-        const fileContent = fs.readFileSync(filePath, 'utf8');
-        output += '\n' + fileContent;
-    });
+  // Write to output file
+  fs.writeFileSync(outputFile, output);
 
-    // Write to output file
-    fs.writeFileSync(outputFile, output);
-
-    console.log('Build complete!');
+  // Print build complete with system time
+  const currentTime = new Date().toLocaleString();
+  console.log(`Build complete at ${currentTime}!`);
 }
 
-// Check for '--watch' argument
+// Write the PID to a file when in watch mode
 if (process.argv.includes('--watch')) {
-    console.log('Watching for file changes...');
+  fs.writeFileSync(pidFile, process.pid.toString());
 
-    const chokidar = require('chokidar');
-    chokidar.watch(srcDir).on('all', (event, path) => {
-        console.log(`File ${event} detected in ${path}, rebuilding...`);
-        buildScript();
-    });
-} else {
+  // Ensure the PID file is deleted when the process exits
+  process.on('exit', () => {
+    if (fs.existsSync(pidFile)) {
+      fs.unlinkSync(pidFile);
+    }
+  });
+
+  console.log('Watching for file changes...');
+
+  const watcher = chokidar.watch(srcDir);
+
+  watcher.on('all', (event, path) => {
+    console.log(`File ${event} detected in ${path}, rebuilding...`);
     buildScript();
+  });
+} else {
+  buildScript();
 }
-
-/*
-Use npm run build to build
-Use npm run watch for auto updates
-git checkout Smart-Text
-git checkout main
-use Control+C to stop any running code
-
-git add . //This command adds all the changes in your working directory (the current state of your files) to the staging area.
-git commit -m "Comment" //Commit changes and add comment
-git push origin main
-
-TO DO:
-FIKSE GITHUB / HOMEBREW
-Remove inversion functionality. It wont be used and it doubles the amount of code
-Right angled Triangle logic is good without inversion
-Kanskje finne en måte og implementere ffxen i jsx fila. Så den er mye lettere å installere og teste i fremtida
-Også muligens gjør at builden ser på main sitt script panel navn for å lage builden, eller motsatt. Så slipper man å oppdatere to steder
-- Simplifisere rektangel koden ved at hvis roundness, eller alle corner pct == 0 så hopper man over all hjørne kalkulering
-*/
