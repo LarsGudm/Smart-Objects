@@ -166,7 +166,7 @@ var ShapeFunctions = (function() {
                 continue;
             }
     
-            Logging.logMessage("Processing layer: " + layer.name);
+            Logging.logMessage("Converting layer: " + layer.name);
     
             // Get layer dimensions and center
             var layerInfo = Utilities.getLayerDimensionsAndCenter(layer, comp);
@@ -286,7 +286,7 @@ var ShapeFunctions = (function() {
             group.property("Transform").property("Position").expression = groupPositionExprString;
     
         } catch (e) {
-            Logging.logMessage("Failed to set smart properties on the shape layer: " + e.toString());
+            Logging.logMessage("Failed to set smart properties on the shape layer: " + e.toString(),true);
             return null;
         }
     

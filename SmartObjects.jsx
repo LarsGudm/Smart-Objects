@@ -761,7 +761,7 @@ function sizeCalculatedExpression() {
     var heightValue = control('Height').value;
     var uniformSize = control("Uniform Size").value;
     if (uniformSize == 1) {
-        paddingHeight = paddingWidth;
+        heightValue = widthValue;
     }
 
     var widthPercentage = control('Width %').value/100;
@@ -1075,7 +1075,7 @@ var ShapeFunctions = (function() {
                 continue;
             }
     
-            Logging.logMessage("Processing layer: " + layer.name);
+            Logging.logMessage("Converting layer: " + layer.name);
     
             // Get layer dimensions and center
             var layerInfo = Utilities.getLayerDimensionsAndCenter(layer, comp);
@@ -1195,7 +1195,7 @@ var ShapeFunctions = (function() {
             group.property("Transform").property("Position").expression = groupPositionExprString;
     
         } catch (e) {
-            Logging.logMessage("Failed to set smart properties on the shape layer: " + e.toString());
+            Logging.logMessage("Failed to set smart properties on the shape layer: " + e.toString(),true);
             return null;
         }
     

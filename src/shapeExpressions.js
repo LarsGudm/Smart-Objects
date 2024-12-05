@@ -502,7 +502,7 @@ function sizeCalculatedExpression() {
     var heightValue = control('Height').value;
     var uniformSize = control("Uniform Size").value;
     if (uniformSize == 1) {
-        paddingHeight = paddingWidth;
+        heightValue = widthValue;
     }
 
     var widthPercentage = control('Width %').value/100;
