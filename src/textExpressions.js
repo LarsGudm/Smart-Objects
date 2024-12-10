@@ -41,16 +41,22 @@ if (boundBoxAnchor==0){
 
 function boundBoxSizeExpression() {
 /*
-var rectWidth = thisLayer.sourceRectAtTime().width;
-var rectHeight = thisLayer.sourceRectAtTime().height;
+var control = effect("Smart Text Control");
+var useParagraph = effect("Use Paragraph Input")("Checkbox").value;
+var paragraphOption = [false, true];
+var rectWidth = thisLayer.sourceRectAtTime(time, paragraphOption[useParagraph]).width;
+var rectHeight = thisLayer.sourceRectAtTime(time, paragraphOption[useParagraph]).height;
 [rectWidth, rectHeight];
 */
 }
 
 function leftTopValuesExpression() {
 /*
-var rectLeft = thisLayer.sourceRectAtTime().left;
-var rectTop = thisLayer.sourceRectAtTime().top;
+var control = effect("Smart Text Control");
+var useParagraph = control("Use Paragraph Input").value;
+var paragraphOption = [false, true];
+var rectLeft = thisLayer.sourceRectAtTime(time, paragraphOption[useParagraph]).left;
+var rectTop = thisLayer.sourceRectAtTime(time, paragraphOption[useParagraph]).top;
 [rectLeft, rectTop];
 */
 }
