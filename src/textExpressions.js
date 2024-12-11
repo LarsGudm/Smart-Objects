@@ -42,7 +42,7 @@ if (boundBoxAnchor==0){
 function boundBoxSizeExpression() {
 /*
 var control = effect("Smart Text Control");
-var useParagraph = effect("Use Paragraph Input")("Checkbox").value;
+var useParagraph = control("Use Paragraph Input").value;
 var paragraphOption = [false, true];
 var rectWidth = thisLayer.sourceRectAtTime(time, paragraphOption[useParagraph]).width;
 var rectHeight = thisLayer.sourceRectAtTime(time, paragraphOption[useParagraph]).height;
