@@ -5,6 +5,19 @@
 
 var Utilities =(function() {
 
+    function mergeProperties(defaults, properties) {
+        var result = {};
+        for (var key in defaults) {
+            result[key] = defaults[key];
+        }
+        for (var key in properties) {
+            if (properties[key] !== undefined) {
+                result[key] = properties[key];
+            }
+        }
+        return result;
+    }
+
     function getLayerDimensionsAndCenter(layer, comp) {
         var time = comp.time;
 
@@ -183,6 +196,33 @@ var Utilities =(function() {
         return appliedEffect;
     }
 
+    function createIncrementedName(comp, baseName) {
+        var highestIndex = 0; // Keep track of the highest index found
+
+        for (var i = 1; i <= comp.numLayers; i++) {
+            var layer = comp.layer(i);
+            if (layer.name.startsWith(baseName)) {
+                var suffix = layer.name.substring(baseName.length).trim();
+                if (suffix === "") {
+                    if (highestIndex === 0) {
+                        highestIndex = 1;
+                    }
+                } else {
+                    var index = parseInt(suffix);
+                    if (index > highestIndex) {
+                        highestIndex = index;
+                    }
+                }
+            }
+        }
+
+        if (highestIndex === 0) {
+            return baseName;
+        } else {
+            return baseName + " " + (highestIndex + 1);
+        }
+    }
+
     // Return the public API
     return {
         getLayerDimensionsAndCenter: getLayerDimensionsAndCenter,
@@ -190,7 +230,9 @@ var Utilities =(function() {
         findFirstFillColor: findFirstFillColor,
         isArray: isArray,
         normalizeColors: normalizeColors,
-        applyPresetAndMoveEffectToTop: applyPresetAndMoveEffectToTop
+        applyPresetAndMoveEffectToTop: applyPresetAndMoveEffectToTop,
+        createIncrementedName: createIncrementedName,
+        mergeProperties: mergeProperties
     };
 
 })();

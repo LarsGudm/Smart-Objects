@@ -1,4 +1,4 @@
-// Version: 1.2.6
+// Version: 1.3.0
 
 // src/utilities.js
 
@@ -6,6 +6,19 @@
 // Helper functions used across the script
 
 var Utilities =(function() {
+
+    function mergeProperties(defaults, properties) {
+        var result = {};
+        for (var key in defaults) {
+            result[key] = defaults[key];
+        }
+        for (var key in properties) {
+            if (properties[key] !== undefined) {
+                result[key] = properties[key];
+            }
+        }
+        return result;
+    }
 
     function getLayerDimensionsAndCenter(layer, comp) {
         var time = comp.time;
@@ -185,6 +198,33 @@ var Utilities =(function() {
         return appliedEffect;
     }
 
+    function createIncrementedName(comp, baseName) {
+        var highestIndex = 0; // Keep track of the highest index found
+
+        for (var i = 1; i <= comp.numLayers; i++) {
+            var layer = comp.layer(i);
+            if (layer.name.startsWith(baseName)) {
+                var suffix = layer.name.substring(baseName.length).trim();
+                if (suffix === "") {
+                    if (highestIndex === 0) {
+                        highestIndex = 1;
+                    }
+                } else {
+                    var index = parseInt(suffix);
+                    if (index > highestIndex) {
+                        highestIndex = index;
+                    }
+                }
+            }
+        }
+
+        if (highestIndex === 0) {
+            return baseName;
+        } else {
+            return baseName + " " + (highestIndex + 1);
+        }
+    }
+
     // Return the public API
     return {
         getLayerDimensionsAndCenter: getLayerDimensionsAndCenter,
@@ -192,7 +232,9 @@ var Utilities =(function() {
         findFirstFillColor: findFirstFillColor,
         isArray: isArray,
         normalizeColors: normalizeColors,
-        applyPresetAndMoveEffectToTop: applyPresetAndMoveEffectToTop
+        applyPresetAndMoveEffectToTop: applyPresetAndMoveEffectToTop,
+        createIncrementedName: createIncrementedName,
+        mergeProperties: mergeProperties
     };
 
 })();
@@ -919,21 +961,9 @@ var ShapeFunctions = (function() {
         name: "Smart Shape",
         label: 8, // Blue label color
         targetLayer: null,
+        createMatte: false,
         separateDimensions: false, // Add default for separate dimensions
     };
-
-    function mergeProperties(defaults, properties) {
-        var result = {};
-        for (var key in defaults) {
-            result[key] = defaults[key];
-        }
-        for (var key in properties) {
-            if (properties[key] !== undefined) {
-                result[key] = properties[key];
-            }
-        }
-        return result;
-    }
 
     function createSmartShape(properties) {
         var comp = app.project.activeItem;
@@ -943,29 +973,31 @@ var ShapeFunctions = (function() {
         }
 
         // Merge properties with defaults
-        var config = mergeProperties(defaultShapeConfig, properties);
+        var config = Utilities.mergeProperties(defaultShapeConfig, properties);
 
         var shapeLayer;
+
+        var contents = shapeLayer.property("Contents");
     
         if (config.targetLayer && !config.createMatte) {
             // If converting an existing layer
             shapeLayer = config.targetLayer.duplicate();
             shapeLayer.moveBefore(config.targetLayer);
+            // Remove existing contents
+            for (var j = contents.numProperties; j >= 1; j--) {
+                contents.property(j).remove();
+            }
         } else {
             // Create a new shape layer
             shapeLayer = comp.layers.addShape();
         }
 
+
+
         shapeLayer.property("Transform").property("Anchor Point").setValue([0, 0]);
 
         shapeLayer.name = config.name;
         shapeLayer.label = config.label;
-    
-        // Remove existing contents
-        var contents = shapeLayer.property("Contents");
-        for (var j = contents.numProperties; j >= 1; j--) {
-            contents.property(j).remove();
-        }
     
         var group = contents.addProperty("ADBE Vector Group");
         group.name = "Group 1";
@@ -973,7 +1005,7 @@ var ShapeFunctions = (function() {
         addShapePaths(group);
     
         // Add fill
-        var fill = group.property("Contents").addProperty("ADBE Vector Graphic - Fill");
+        group.property("Contents").addProperty("ADBE Vector Graphic - Fill");
         fill.property("Color").setValue(config.fillColor);
     
         // Add stroke

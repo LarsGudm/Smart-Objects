@@ -7,7 +7,7 @@ const srcDir = path.join(__dirname, 'src');
 const outputFile = path.join(__dirname, 'SmartObjects.jsx');
 const pidFile = path.join(__dirname, 'watcher.pid'); // PID file path
 
-const version = '1.2.6';
+const version = '1.3.0';
 
 // Order matters if there are dependencies
 const files = [

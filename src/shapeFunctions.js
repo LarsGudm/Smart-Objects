@@ -10,21 +10,9 @@ var ShapeFunctions = (function() {
         name: "Smart Shape",
         label: 8, // Blue label color
         targetLayer: null,
+        createMatte: false,
         separateDimensions: false, // Add default for separate dimensions
     };
-
-    function mergeProperties(defaults, properties) {
-        var result = {};
-        for (var key in defaults) {
-            result[key] = defaults[key];
-        }
-        for (var key in properties) {
-            if (properties[key] !== undefined) {
-                result[key] = properties[key];
-            }
-        }
-        return result;
-    }
 
     function createSmartShape(properties) {
         var comp = app.project.activeItem;
@@ -34,7 +22,7 @@ var ShapeFunctions = (function() {
         }
 
         // Merge properties with defaults
-        var config = mergeProperties(defaultShapeConfig, properties);
+        var config = Utilities.mergeProperties(defaultShapeConfig, properties);
 
         var shapeLayer;
     
@@ -47,16 +35,16 @@ var ShapeFunctions = (function() {
             shapeLayer = comp.layers.addShape();
         }
 
-        shapeLayer.property("Transform").property("Anchor Point").setValue([0, 0]);
-
-        shapeLayer.name = config.name;
-        shapeLayer.label = config.label;
-    
         // Remove existing contents
         var contents = shapeLayer.property("Contents");
         for (var j = contents.numProperties; j >= 1; j--) {
             contents.property(j).remove();
         }
+
+        shapeLayer.property("Transform").property("Anchor Point").setValue([0, 0]);
+
+        shapeLayer.name = config.name;
+        shapeLayer.label = config.label;
     
         var group = contents.addProperty("ADBE Vector Group");
         group.name = "Group 1";
@@ -64,7 +52,7 @@ var ShapeFunctions = (function() {
         addShapePaths(group);
     
         // Add fill
-        var fill = group.property("Contents").addProperty("ADBE Vector Graphic - Fill");
+        group.property("Contents").addProperty("ADBE Vector Graphic - Fill");
         fill.property("Color").setValue(config.fillColor);
     
         // Add stroke
